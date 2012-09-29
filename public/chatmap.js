@@ -27,7 +27,6 @@ $(document).ready(function() {
     var stopOptions;
     var stop; 
     stop = stops[i];
-    console.log("stop: " + stop.lat);
     center = new google.maps.LatLng(stop.lat, stop.lng);
     stopOptions = {
       strokeColor: "blue",
@@ -46,7 +45,6 @@ $(document).ready(function() {
 
   function attachEventHandlerToStop(stopCircle, stop) {
     google.maps.event.addListener(stopCircle, 'mouseover', function() {
-      console.log("Stop "+stop.stop_name+" touched");
       stopCircle.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
     });
     google.maps.event.addListener(stopCircle, 'mouseout', function() {
