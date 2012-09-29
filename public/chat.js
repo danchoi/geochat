@@ -67,6 +67,8 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
       } else {
          $('#chatStream').append(event.data);
+         liveRoom = $('#chatStream .message');
+
          $('#chatStream').animate({scrollTop: $('#chatStream').height()});
       }
      }
