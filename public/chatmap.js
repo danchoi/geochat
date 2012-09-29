@@ -19,6 +19,8 @@ $(document).ready(function() {
     mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
+  $("#create_chat").hide();
+
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
   for (var i in stops) {
@@ -60,7 +62,7 @@ $(document).ready(function() {
     browserSupportFlag = true;
     navigator.geolocation.getCurrentPosition(function(position) {
       initialLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
-      console.log("initial location!");
+      $("#create_chat").show();
     }, function() {
       // console.log("No geolocation");
     });
