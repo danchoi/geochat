@@ -46,8 +46,8 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
             roomCircles.push(roomCircle);
             attachEventHandlerToStop(roomCircle, room);
           }
-        } else if (data.id) {  // create a room
-           var  room = JSON.parse(data.rooms[i]);
+        } else if (data.room_id) {  // create a room
+           var  room = data;
             var center = new google.maps.LatLng(parseFloat(room.lat), parseFloat(room.lng));
             roomOptions = {
               strokeColor: "blue",
