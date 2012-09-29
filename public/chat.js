@@ -22,7 +22,7 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
    webSocket.onmessage = function(event){
      if (event.data.length > 0) {
       if (event.data[0] == '{') {
-
+        var x;
         console.log(event.data);
         var data = JSON.parse(event.data);
         if (data.rooms) {
@@ -67,8 +67,19 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
       } else {
          $('#chatStream').append(event.data);
-         liveRoom = $('#chatStream .message');
+         var liveRoomId = $('#chatStream .message').last().attr("room_id");
+         if (liveRoomId ) {
+           console.log("live room id: "+liveRoomId);
+           x = roomCircles[liveRoomId];
+           console.log(x);
+           x.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
+           setTimeout(
+            function() {
+             x.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
 
+            }, 100
+           );
+         }
          $('#chatStream').animate({scrollTop: $('#chatStream').height()});
       }
      }

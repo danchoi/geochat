@@ -3,7 +3,6 @@ var rooms = [{"room_id": 3, "lat": 42.36, "lng": -71.07}, {"room_id": 4, "lat": 
 
 var map;
 var roomCircles = [];
-var liveRoom;
 
 var initialLocation;
 
