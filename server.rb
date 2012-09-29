@@ -102,10 +102,7 @@ EventMachine.run do
             rooms += [Room.new(room_id, v[:name], v[:lat], v[:lng], v[:member_count])]
           end
 
-          msg = <<-MSG
-            { "rooms":#{rooms.collect { |r| JSON.pretty_generate(r) }}
-            }
-          MSG
+          msg = %Q@{"rooms":#{rooms.collect { |r| JSON.pretty_generate(r) }}}@
 
           ws.send msg
 
