@@ -113,17 +113,42 @@ html body div#chatStream div.message span.timecode {
 
 html body div#chatStream div.message span.user {
 	float:left;
-	font:10px Arial #333;
 	display:block;
 	margin-right:10px;
 }
 
 html body div#chatStream div.message span.content {
 	float:left;
-	font:10px Arial #333;
 	display:block;
 	margin-right:10px;
 	clear:left;
 
 }
-user_alert
+html body div#chatStream div.user_alert{
+	float:left;
+	clear:both;
+}
+
+span.timecode {
+    color: #777777;
+    display: block;
+    font-size: 10px;
+    font-style: italic;
+    margin-top: 10px;
+}
+span.user {
+    color: #FF0000;
+    display: block;
+    font-size: 10px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.message span.content {
+    color: #111111;
+    display: block;
+    font-size: 20px;
+    font-style: italic;
+}
+.user_alert {
+    font-size: 10px;
+}
