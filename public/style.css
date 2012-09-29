@@ -1,31 +1,46 @@
-html { height: 100% }
+html { height: 100% 
+	}
+	
 body { 
   font-family: Verdana, Arial;
   font-size: 13px;
-  height: 100%; margin: 0; padding: 0 
+  height: 100%;
+  width:100%;
+  margin: 0; 
+  padding: 0;
+  background:#333;
 }
 
-#routeContent {
-  display: table;
-  width: 100%;
+h2 {
+color:#FAFAFA;	
+display:block;
+margin: 10px 0px 10px 10px;
 }
+
 #map_canvas { 
   background-color: #ECECEC;;
-  display: table-cell;
   width: 70%;
+  height:100%;
+  display:block;
+  float:left;
 }
 
-aside {
-  display: table-cell;
-  width: 30%;
+#chat {
+float:left;
+display:block;
+width: 28%;
+height:100%;
+overflow: auto; /* <label id="code.overflow" /> */
+background-color: #fff;
+padding: 10px;
+overflow:hidden;
+
+
 }
-aside ul {
+chat ul {
   list-style-type: none;
   padding-left: 0;
   font-size: 10px;
-}
-#asideContent {
-  min-height: 700px;
 }
 
 
@@ -33,9 +48,3 @@ aside ul {
   margin: 0;
 }
 
-#chat{
-  height: 300px; 
-  overflow: auto; /* <label id="code.overflow" /> */
-  background-color: #fff;
-  padding: 10px;
-}
