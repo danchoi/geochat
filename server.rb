@@ -102,7 +102,7 @@ EventMachine.run do
             rooms += [Room.new(room_id, v[:name], v[:lat], v[:lng], v[:member_count])]
           end
 
-          msg = %Q@{"rooms":#{rooms.collect { |r| JSON.pretty_generate(r) }}}@
+          msg = %Q@{"rooms":#{rooms.collect { |r| r.to_json }}}@
 
           ws.send msg
 
@@ -125,7 +125,7 @@ EventMachine.run do
           # Notify all clients of new room
           room = Room.new(room_id, room_name, lat, lng, 1)
           #cmd = '/room {"id":"#{room_id}", "name":"#{name}", "lat":"#{lat}", "lng":"#{lng}", "member_count":"1"}'
-          @chatroom.push JSON.pretty_generate(room)
+          @chatroom.push room.to_json
         when "enter"
           puts "### enter"
           puts options
