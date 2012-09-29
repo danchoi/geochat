@@ -1,6 +1,7 @@
 var rooms = [{"room_id": 3, "lat": 42.36, "lng": -71.07}, {"room_id": 4, "lat": 42.36, "lng": -71.08}, {"lat": 42.32, "lng": -71.08, "room_id": 5}
 ];
 
+var map;
 var roomCircles = [];
 
 var initialLocation;
@@ -8,6 +9,19 @@ var initialLocation;
 function randomlyPulse() {
 
 };
+
+function attachEventHandlerToStop(roomCircle, room) {
+  google.maps.event.addListener(roomCircle, 'mouseover', function() {
+    roomCircle.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
+  });
+  google.maps.event.addListener(roomCircle, 'mouseout', function() {
+    roomCircle.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
+  });
+  google.maps.event.addListener(roomCircle, 'click', function() {
+    console.log("Room clicked: "+ room.room_id); 
+    webSocket.send("/enter "+room.room_id );
+  });
+}
 
 $(document).ready(function() {
   var center;
@@ -21,52 +35,17 @@ $(document).ready(function() {
 
   $("#create_chat").hide();
 
-  var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+  map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
   google.maps.event.addListener(map, 'click', function(event) {
     var pos = event.latLng;
     var msg = "/create new_room "+pos.lat()+" "+pos.lng();
-    console.log(msg);
     webSocket.send(msg);
 
   });
 
 
-  for (var i in rooms) {
-    var roomOptions;
-    var room; 
-    room = rooms[i];
-    center = new google.maps.LatLng(room.lat, room.lng);
-    roomOptions = {
-      strokeColor: "blue",
-      strokeOpacity: 0.6,
-      strokeWeight: 4,
-      fillColor: "#FFFFFF",
-      fillOpacity: 0.1,
-      map: map,
-      center: center,
-      radius: 180
-    }
-    roomCircle = new google.maps.Circle(roomOptions);
-    roomCircles.push(roomCircle);
-    attachEventHandlerToStop(roomCircle, room);
-  }
-
-  function attachEventHandlerToStop(roomCircle, room) {
-    google.maps.event.addListener(roomCircle, 'mouseover', function() {
-      roomCircle.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
-    });
-    google.maps.event.addListener(roomCircle, 'mouseout', function() {
-      roomCircle.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
-    });
-    google.maps.event.addListener(roomCircle, 'click', function() {
-      console.log("Room clicked: "+ room.room_id); 
-    });
-  }
-
-
   randomlyPulse();
-
 
   if(navigator.geolocation) {
     browserSupportFlag = true;

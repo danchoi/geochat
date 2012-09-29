@@ -38,6 +38,9 @@ EventMachine.run do
   # local rooms { id => { :name => "Boston", :lat => "100", :lng => "-100", :member_count => 1, :channel => EM::Channel} }
   @rooms = {}
 
+  # { :user_id => :room_id }
+  @memberships = {}
+
   EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 9394, :debug => true) do |ws|
 
     # fires when we open a connection
@@ -62,7 +65,7 @@ EventMachine.run do
           parse_command(ws, msg, chatsession)
         else
           @chatroom.push( %Q{
-          <div class='message'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='user'>#{chatsession[:nick]}</span><span class='content'>#{msg}</span></div>
+          <div room_id='#{@memberships[sid]}' class='message'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='user'>#{chatsession[:nick]}</span><span class='content'>#{msg}</span></div>
           } )
         end
       end
@@ -141,6 +144,8 @@ EventMachine.run do
             ws.send msg
           end
           room[:member_count] += 1
+
+          @memberships[sid] = room_id
 
           # Reply
           ws.send "Changed your room to #{room[:name]}"
