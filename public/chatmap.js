@@ -23,6 +23,15 @@ $(document).ready(function() {
 
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
+  google.maps.event.addListener(map, 'click', function(event) {
+    var pos = event.latLng;
+    var msg = "/create new_room "+pos.lat()+" "+pos.lng();
+    console.log(msg);
+    webSocket.send(msg);
+
+  });
+
+
   for (var i in rooms) {
     var roomOptions;
     var room; 
