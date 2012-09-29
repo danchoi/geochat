@@ -19,13 +19,11 @@
 
 </head>
 <body>
-
-  <h2>Map Chat</h2>
-
-  <div id="xmap_canvas"></div>
-
-  <aside>
-    <form id="nick_form" action="#" method="post" accept-charset="utf-8">
+  <h2>GeoGossip</h2>
+  <div id="map_canvas"></div>
+  <div id="chat">
+<div id="create_stream">Create A Chat</div> 
+  <form id="nick_form" action="#" method="post" accept-charset="utf-8">
       <p>
         <label>Nickname
           <input id="nickname" type="text" value="GuestUser"/>
@@ -33,9 +31,7 @@
         <input type="submit" value="Change">
       </p>
     </form>
-    
-    <div id="chat">connecting....</div>
-    
+       
     <form id="chat_form" action="#" method="post" accept-charset="utf-8">
       <p>
         <label>Message
@@ -44,7 +40,10 @@
         <input type="submit" value="Send">
       </p>
     </form>
-  </aside>
+
+    <div id="chatStream">
+    </div>
+</div>
 
 
 </body>

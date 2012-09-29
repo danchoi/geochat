@@ -1,41 +1,92 @@
-html { height: 100% }
+html { height: 100% 
+	}
+	
 body { 
   font-family: Verdana, Arial;
   font-size: 13px;
-  height: 100%; margin: 0; padding: 0 
+  height: 100%;
+  width:100%;
+  margin: 0; 
+  padding: 0;
+  background:#333;
 }
 
-#routeContent {
-  display: table;
-  width: 100%;
+h2 {
+color:#FAFAFA;	
+display:block;
+margin: 10px 0px 10px 10px;
 }
+
 #map_canvas { 
   background-color: #ECECEC;;
-  display: table-cell;
   width: 70%;
+  height:100%;
+  display:block;
+  float:left;
 }
 
-aside {
-  display: table-cell;
-  width: 30%;
+#chat {
+padding-top:40px;
+float:left;
+display:block;
+width: 28%;
+min-width:300px;
+background-color: #fff;
+padding: 10px;
+height:300px;
 }
-aside ul {
-  list-style-type: none;
-  padding-left: 0;
-  font-size: 10px;
+
+#create_stream {
+	    background-attachment: scroll;
+	    background-clip: border-box;
+	    background-color: transparent;
+	    background:#AD190A;
+	    background-origin: padding-box;
+	    background-position: 0 0;
+	    background-repeat: repeat;
+	    background-size: 1px 100px;
+	    border-radius: 4px 4px 4px 4px;
+	    box-shadow: 0 -1px 1px #540A07 inset, 0 0 2px #B57373 inset;
+	    color: #FAFAFA;
+	    display: block;
+	    font: 16px Arial,sans-serif;
+	    height: 32px;
+	    margin: 10px auto;
+	    padding: 13px 0 0;
+	    position: relative;
+	    text-align: center;
+	    text-decoration: none;
+	    text-shadow: 0 -1px 2px #111111;
+	    text-transform: uppercase;
+	    transition: background 0.2s ease-out 0s;
+	    width: 150px;
 }
-#asideContent {
-  min-height: 700px;
+
+#create_stream:hover {
+    background:#AD190A;
+    box-shadow: 0 0 0 #B57373 inset, 0 2px 2px #7C0E0A inset;
+    text-shadow: 0 1px 2px #111111;
+}
+#create_stream:active {
+    background: none repeat scroll 0 0 #6D0B09;
+    box-shadow: 0 0 0 #B57373 inset, 0 3px 5px #380605 inset;
+    text-shadow: 0 1px 2px #111111;
+    transition: background 0s ease-out 0s;
+}
+
+#chat_form{
+	overflow:scroll;
 }
 
 
-#chat_wrapper h2{
-  margin: 0;
+#ongoing {
+  font-family: Verdana, Arial;
+  font-size: 13px;
+  margin:auto;	
+  text-transform: uppercase;
+  display:block;
 }
 
-#chat{
-  height: 300px; 
-  overflow: auto; /* <label id="code.overflow" /> */
-  background-color: #fff;
-  padding: 10px;
+#nickname{
+margin-top:20px;
 }

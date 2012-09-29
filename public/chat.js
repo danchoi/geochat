@@ -14,16 +14,18 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
    var webSocket = new WebSocket('ws://poddb.com:9394/');
    
    webSocket.onopen = function(event){
-     $('#chat').append('<br>Connected to the server');
+     $('#chatStream').append('<br>Connected to the server');
+     webSocket.send("/rooms");
    };
+
    
    webSocket.onmessage = function(event){
-     $('#chat').append("<br>" + event.data);
-     $('#chat').animate({scrollTop: $('#chat').height()});
+     $('#chatStream').append(event.data);
+     $('#chatStream').animate({scrollTop: $('#chatStream').height()});
    };
    
    webSocket.onclose = function(event){
-     $("#chat").append('<br>Connection closed');
+     $("#chatStream").append('<br>Connection closed');
    };
    
    
@@ -38,6 +40,14 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
       e.preventDefault();
       var textfield = $("#nickname");
       webSocket.send("/nick " + textfield.val());
+    });
+
+    $("#create_stream").click(function(e) {
+      if (initialLocation) {
+        var msg = "/create new_room "+initialLocation.lat()+" "+initialLocation.lng();
+        console.log(msg);
+        webSocket.send(msg);
+      }
     });
     
    })

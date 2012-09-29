@@ -1,5 +1,16 @@
-$(document).ready(function() {
+var rooms = [{"room_id": 3, "lat": 42.36, "lng": -71.07}, {"room_id": 4, "lat": 42.36, "lng": -71.08}, {"lat": 42.32, "lng": -71.08, "room_id": 5}
+];
 
+var roomCircles = [];
+
+var initialLocation;
+
+function randomlyPulse() {
+
+};
+
+$(document).ready(function() {
+  var center;
 
   var latLng = new google.maps.LatLng(42.36, -71.08);
   var myOptions = {
@@ -8,25 +19,56 @@ $(document).ready(function() {
     mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
+  $("#create_chat").hide();
+
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
-  /*   / stops
-  for (var i in stops) {
-    var stop = stops[i];
-    var center = new google.maps.LatLng(stop.stop_lat, stop.stop_lon);
-    var stopOptions = {
-      strokeColor: (stop.selected ? "blue" : "#FF0000"),
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
+  for (var i in rooms) {
+    var roomOptions;
+    var room; 
+    room = rooms[i];
+    center = new google.maps.LatLng(room.lat, room.lng);
+    roomOptions = {
+      strokeColor: "blue",
+      strokeOpacity: 0.6,
+      strokeWeight: 4,
       fillColor: "#FFFFFF",
-      fillOpacity: 1,
+      fillOpacity: 0.1,
       map: map,
       center: center,
-      radius: (stop.selected ? 50 : 20)
+      radius: 180
     }
-    stopCircle = new google.maps.Circle(stopOptions);
+    roomCircle = new google.maps.Circle(roomOptions);
+    roomCircles.push(roomCircle);
+    attachEventHandlerToStop(roomCircle, room);
   }
 
-  */
+  function attachEventHandlerToStop(roomCircle, room) {
+    google.maps.event.addListener(roomCircle, 'mouseover', function() {
+      roomCircle.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
+    });
+    google.maps.event.addListener(roomCircle, 'mouseout', function() {
+      roomCircle.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
+    });
+    google.maps.event.addListener(roomCircle, 'click', function() {
+      console.log("Room clicked: "+ room.room_id); 
+    });
+  }
+
+
+  randomlyPulse();
+
+
+  if(navigator.geolocation) {
+    browserSupportFlag = true;
+    navigator.geolocation.getCurrentPosition(function(position) {
+      initialLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
+      $("#create_chat").show();
+    }, function() {
+      // console.log("No geolocation");
+    });
+  }
+
+
 });
 
