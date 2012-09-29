@@ -1,7 +1,7 @@
-var stops = [{"lat": 42.36, "lng": -71.07}, {"lat": 42.36, "lng": -71.08}, {"lat": 42.32, "lng": -71.08}
+var rooms = [{"room_id": 3, "lat": 42.36, "lng": -71.07}, {"room_id": 4, "lat": 42.36, "lng": -71.08}, {"lat": 42.32, "lng": -71.08, "room_id": 5}
 ];
 
-var stopCircles = [];
+var roomCircles = [];
 
 var initialLocation;
 
@@ -23,13 +23,12 @@ $(document).ready(function() {
 
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
-  for (var i in stops) {
-    var stopOptions;
-    var stop; 
-    stop = stops[i];
-    console.log("stop: " + stop.lat);
-    center = new google.maps.LatLng(stop.lat, stop.lng);
-    stopOptions = {
+  for (var i in rooms) {
+    var roomOptions;
+    var room; 
+    room = rooms[i];
+    center = new google.maps.LatLng(room.lat, room.lng);
+    roomOptions = {
       strokeColor: "blue",
       strokeOpacity: 0.6,
       strokeWeight: 4,
@@ -39,18 +38,20 @@ $(document).ready(function() {
       center: center,
       radius: 180
     }
-    stopCircle = new google.maps.Circle(stopOptions);
-    stopCircles.push(stopCircle);
-    attachEventHandlerToStop(stopCircle, stop);
+    roomCircle = new google.maps.Circle(roomOptions);
+    roomCircles.push(roomCircle);
+    attachEventHandlerToStop(roomCircle, room);
   }
 
-  function attachEventHandlerToStop(stopCircle, stop) {
-    google.maps.event.addListener(stopCircle, 'mouseover', function() {
-      console.log("Stop "+stop.stop_name+" touched");
-      stopCircle.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
+  function attachEventHandlerToStop(roomCircle, room) {
+    google.maps.event.addListener(roomCircle, 'mouseover', function() {
+      roomCircle.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
     });
-    google.maps.event.addListener(stopCircle, 'mouseout', function() {
-      stopCircle.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
+    google.maps.event.addListener(roomCircle, 'mouseout', function() {
+      roomCircle.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
+    });
+    google.maps.event.addListener(roomCircle, 'click', function() {
+      console.log("Room clicked: "+ room.room_id); 
     });
   }
 
