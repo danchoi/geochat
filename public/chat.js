@@ -10,7 +10,8 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 
 
-   var webSocket = new WebSocket('ws://localhost:9394/');
+   //var webSocket = new WebSocket('ws://localhost:9394/');
+   var webSocket = new WebSocket('ws://poddb.com:9394/');
    
    webSocket.onopen = function(event){
      $('#chat').append('<br>Connected to the server');
