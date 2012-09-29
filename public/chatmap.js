@@ -3,6 +3,8 @@ var stops = [{"lat": 42.36, "lng": -71.07}, {"lat": 42.36, "lng": -71.08}, {"lat
 
 var stopCircles = [];
 
+var initialLocation;
+
 function randomlyPulse() {
 
 };
@@ -52,5 +54,18 @@ $(document).ready(function() {
 
 
   randomlyPulse();
+
+
+  if(navigator.geolocation) {
+    browserSupportFlag = true;
+    navigator.geolocation.getCurrentPosition(function(position) {
+      initialLocation = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
+      console.log("initial location!");
+    }, function() {
+      // console.log("No geolocation");
+    });
+  }
+
+
 });
 

@@ -14,16 +14,16 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
    var webSocket = new WebSocket('ws://poddb.com:9394/');
    
    webSocket.onopen = function(event){
-     $('#chat').append('<br>Connected to the server');
+     $('#chatStream').append('<br>Connected to the server');
    };
    
    webSocket.onmessage = function(event){
-     $('#chat').append(event.data);
-     $('#chat').animate({scrollTop: $('#chat').height()});
+     $('#chatStream').append(event.data);
+     $('#chatStream').animate({scrollTop: $('#chatStream').height()});
    };
    
    webSocket.onclose = function(event){
-     $("#chat").append('<br>Connection closed');
+     $("#chatStream").append('<br>Connection closed');
    };
    
    
