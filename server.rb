@@ -35,7 +35,9 @@ EventMachine.run do
         ws.send msg 
       end
       
-      @chatroom.push "#{Time.now.strftime("%H:%M:%S")}  | #{chatsession[:nick]} joined!"
+      @chatroom.push %Q{
+        <div class='user_alert'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='content'>#{chatsession[:nick]} joined!</span></div>
+      }
       
       # fires when we receive a message on the channel
       ws.onmessage do |msg|
@@ -52,7 +54,9 @@ EventMachine.run do
       # fires when someone leaves
       ws.onclose do
         @chatroom.unsubscribe(sid)
-        @chatroom.push "User #{chatsession[:nick]} has left"
+        @chatroom.push %Q{
+          <div class='user_alert'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='content'>User #{chatsession[:nick]} has left</span></div>
+        }
       end
       
       # command parser - looking for /nick newname

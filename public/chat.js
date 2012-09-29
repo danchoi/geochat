@@ -15,7 +15,9 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
    
    webSocket.onopen = function(event){
      $('#chatStream').append('<br>Connected to the server');
+     webSocket.send("/rooms");
    };
+
    
    webSocket.onmessage = function(event){
      $('#chatStream').append(event.data);
@@ -38,6 +40,14 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
       e.preventDefault();
       var textfield = $("#nickname");
       webSocket.send("/nick " + textfield.val());
+    });
+
+    $("#create_stream").click(function(e) {
+      if (initialLocation) {
+        var msg = "/create new_room "+initialLocation.lat()+" "+initialLocation.lng();
+        console.log(msg);
+        webSocket.send(msg);
+      }
     });
     
    })
