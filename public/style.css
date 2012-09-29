@@ -8,13 +8,14 @@ body {
   width:100%;
   margin: 0; 
   padding: 0;
-  background:#333;
+  background:#FFF;
 }
 
 h2 {
 color:#FAFAFA;	
 display:block;
-margin: 10px 0px 10px 10px;
+padding:10px 0px 10px 10px;
+background:#333;
 }
 
 #map_canvas { 
@@ -33,7 +34,7 @@ width: 28%;
 min-width:300px;
 background-color: #fff;
 padding: 10px;
-height:300px;
+height:150px;
 }
 
 #create_stream {
@@ -90,3 +91,39 @@ height:300px;
 #nickname{
 margin-top:20px;
 }
+
+#chatStream {
+height:300px;
+background:#FFF;
+display:block;
+float:left;
+width:28%;
+ overflow:scroll;
+margin-left:10px;
+height:500px;
+}
+
+html body div#chatStream div.message span.timecode {
+	float:left;
+	font:10px Arial #333;
+	display:block;
+	margin-right:10px;
+	clear:left;
+}
+
+html body div#chatStream div.message span.user {
+	float:left;
+	font:10px Arial #333;
+	display:block;
+	margin-right:10px;
+}
+
+html body div#chatStream div.message span.content {
+	float:left;
+	font:10px Arial #333;
+	display:block;
+	margin-right:10px;
+	clear:left;
+
+}
+user_alert
