@@ -31,17 +31,16 @@ float:left;
 display:block;
 width: 28%;
 min-width:300px;
-height:100%;
-overflow: auto; /* <label id="code.overflow" /> */
 background-color: #fff;
 padding: 10px;
+height:300px;
 }
 
 #create_stream {
 	    background-attachment: scroll;
 	    background-clip: border-box;
 	    background-color: transparent;
-	    background-image: linear-gradient(#AD190A 20%, #440806);
+	    background:#AD190A;
 	    background-origin: padding-box;
 	    background-position: 0 0;
 	    background-repeat: repeat;
@@ -64,7 +63,7 @@ padding: 10px;
 }
 
 #create_stream:hover {
-    background-position: 100px center;
+    background:#AD190A;
     box-shadow: 0 0 0 #B57373 inset, 0 2px 2px #7C0E0A inset;
     text-shadow: 0 1px 2px #111111;
 }
@@ -74,6 +73,11 @@ padding: 10px;
     text-shadow: 0 1px 2px #111111;
     transition: background 0s ease-out 0s;
 }
+
+#chat_form{
+	overflow:scroll;
+}
+
 
 #ongoing {
   font-family: Verdana, Arial;
