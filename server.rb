@@ -40,10 +40,12 @@ EventMachine.run do
       # fires when we receive a message on the channel
       ws.onmessage do |msg|
         
-        if msg[0].chr == "/"
+        if msg && msg[0] &&  msg[0].chr == "/"
           parse_command(ws, msg, chatsession)
         else
-          @chatroom.push "#{Time.now.strftime("%H:%M:%S")}  | #{chatsession[:nick]} |  #{msg}"
+          @chatroom.push( %Q{
+          <div class='message'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='user'>#{chatsession[:nick]}</span><span class='content'>#{msg}</span></div>
+          } )
         end
       end
       

@@ -18,7 +18,7 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
    };
    
    webSocket.onmessage = function(event){
-     $('#chat').append("<br>" + event.data);
+     $('#chat').append(event.data);
      $('#chat').animate({scrollTop: $('#chat').height()});
    };
    
