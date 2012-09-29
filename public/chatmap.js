@@ -1,4 +1,10 @@
+var stops = [{"lat": 42.36, "lng": -71.07}, {"lat": 42.36, "lng": -71.08}, {"lat": 42.32, "lng": -71.08}
+];
+
 $(document).ready(function() {
+  var stopOptions;
+  var center;
+  var stop;
 
 
   var latLng = new google.maps.LatLng(42.36, -71.08);
@@ -10,23 +16,22 @@ $(document).ready(function() {
 
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
-  /*   / stops
   for (var i in stops) {
-    var stop = stops[i];
-    var center = new google.maps.LatLng(stop.stop_lat, stop.stop_lon);
-    var stopOptions = {
+    stop = stops[i];
+    console.log("stop: " + stop.lat);
+    center = new google.maps.LatLng(stop.lat, stop.lng);
+    stopOptions = {
       strokeColor: (stop.selected ? "blue" : "#FF0000"),
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
+      strokeOpacity: 0.6,
+      strokeWeight: 4,
       fillColor: "#FFFFFF",
-      fillOpacity: 1,
+      fillOpacity: 0.1,
       map: map,
       center: center,
-      radius: (stop.selected ? 50 : 20)
+      radius: 180
     }
     stopCircle = new google.maps.Circle(stopOptions);
   }
 
-  */
 });
 
