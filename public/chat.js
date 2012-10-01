@@ -1,32 +1,38 @@
-/***
- * Excerpted from "HTML5 and CSS3",
- * published by The Pragmatic Bookshelf.
- * Copyrights apply to this code. It may not be used to create training material, 
- * courses, books, articles, and the like. Contact us if you are in doubt.
- * We make no guarantees that this code is fit for any purpose. 
- * Visit http://www.pragmaticprogrammer.com/titles/bhh5 for more book information.
-***/
 WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
-var webSocket;
+var webSocket;  // A global
+
+// see beget: From p. 22 of JavaScript the Good Parts
+
+var geoRoomPrototype = {
+  toString: function() {
+    console.log("TEST toString");
+  }
+}
+var messagePrototype  = {
+  toString: function() {
+    console.log("Message: TEST toString");
+  }
+}
 
 function getURLParameter(name) {
   return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
 }
 
-
 $(document).ready(function() {
-
-  console.log("null param? " + (getURLParameter('dev') === null)) ;
   var webSocketURL = getURLParameter('dev') ? 'ws://localhost:9394' : 'ws://poddb.com:9394';
   webSocket = new WebSocket(webSocketURL); 
-
   webSocket.onopen = function(event){
     $('#chatStream').append('<br>Connected to the server');
     webSocket.send("/rooms");
   };
 
+  // test ich template
+  // console.log( ich.user({name: 'test name', twitter: 'danchoi'}) );
+
  
+  // TODO move this stuff into a dispatcher class 
+
   webSocket.onmessage = function(event){
     if (event.data.length > 0) {
      if (event.data[0] == '{') {
@@ -73,8 +79,13 @@ $(document).ready(function() {
 
        }
 
-     } else {
-        $('#chatStream').append(event.data);
+     } else {  // receive a chat message 
+        
+        var message = event.data;
+        message.prototype = messagePrototype;
+        console.log("message received");
+        console.log(message.toString());
+        $('#chatStream').append(message);
         var liveRoomId = $('#chatStream .message').last().attr("room_id");
         if (liveRoomId ) {
           console.log("live room id: "+liveRoomId);
@@ -119,7 +130,5 @@ $(document).ready(function() {
       webSocket.send(msg);
     }
   });
-  
-   
 });
 
