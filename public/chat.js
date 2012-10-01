@@ -8,10 +8,18 @@
 ***/
 WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
+var webSocket;
+
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
+}
 
 
-   //var webSocket = new WebSocket('ws://localhost:9394/');
-   var webSocket = new WebSocket('ws://poddb.com:9394/');
+$(document).ready(function() {
+  console.log("document ready: " + location.href + " " + getURLParameter('dev'));
+
+   var webSocketURL = getURLParameter('dev') == 'true' ? 'ws://localhost:9394' : 'ws://poddb.com:9394';
+    webSocket = new WebSocket(webSocketURL); 
    
    webSocket.onopen = function(event){
      $('#chatStream').append('<br>Connected to the server');
@@ -90,28 +98,28 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
    };
    
    
-   $(function(){
-     $("form#chat_form").submit(function(e){
-        e.preventDefault();
-        var textfield = $("#message");
-        webSocket.send(textfield.val());
-        textfield.val("");
-      });
-    $("form#nick_form").submit(function(e){
-      e.preventDefault();
-      var textfield = $("#nickname");
-      webSocket.send("/nick " + textfield.val());
-    });
+  
+  $("form#chat_form").submit(function(e){
+    e.preventDefault();
+    var textfield = $("#message");
+    webSocket.send(textfield.val());
+    textfield.val("");
+  });
 
-    $("#create_stream").click(function(e) {
-      if (initialLocation) {
-        var msg = "/create new_room "+initialLocation.lat()+" "+initialLocation.lng();
-        console.log(msg);
-        webSocket.send(msg);
-      }
-    });
-    
-   })
+  $("form#nick_form").submit(function(e){
+    e.preventDefault();
+    var textfield = $("#nickname");
+    webSocket.send("/nick " + textfield.val());
+  });
+
+  $("#create_stream").click(function(e) {
+    if (initialLocation) {
+      var msg = "/create new_room "+initialLocation.lat()+" "+initialLocation.lng();
+      console.log(msg);
+      webSocket.send(msg);
+    }
+  });
+  
    
-
+});
 
