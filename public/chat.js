@@ -17,87 +17,87 @@ function getURLParameter(name) {
 
 $(document).ready(function() {
 
-    console.log("null param? " + (getURLParameter('dev') === null)) ;
-    var webSocketURL = getURLParameter('dev') ? 'ws://localhost:9394' : 'ws://poddb.com:9394';
-    webSocket = new WebSocket(webSocketURL); 
+  console.log("null param? " + (getURLParameter('dev') === null)) ;
+  var webSocketURL = getURLParameter('dev') ? 'ws://localhost:9394' : 'ws://poddb.com:9394';
+  webSocket = new WebSocket(webSocketURL); 
 
-    webSocket.onopen = function(event){
-      $('#chatStream').append('<br>Connected to the server');
-      webSocket.send("/rooms");
-    };
+  webSocket.onopen = function(event){
+    $('#chatStream').append('<br>Connected to the server');
+    webSocket.send("/rooms");
+  };
 
-   
-    webSocket.onmessage = function(event){
-      if (event.data.length > 0) {
-       if (event.data[0] == '{') {
-         var x;
-         console.log(event.data);
-         var data = JSON.parse(event.data);
-         if (data.rooms) {
-           for (var i in data.rooms) {
-             var roomOptions;
-             var room; 
-             room = JSON.parse(data.rooms[i]);
-             console.log("ROOM"+room);
-             var center = new google.maps.LatLng(parseFloat(room.lat), parseFloat(room.lng));
-             roomOptions = {
-               strokeColor: "blue",
-               strokeOpacity: 0.6,
-               strokeWeight: 4,
-               fillColor: "#FFFFFF",
-               fillOpacity: 0.1,
-               map: map,
-               center: center,
-               radius: 180
-             }
-             roomCircle = new google.maps.Circle(roomOptions);
-             roomCircles.push(roomCircle);
-             attachEventHandlerToStop(roomCircle, room);
+ 
+  webSocket.onmessage = function(event){
+    if (event.data.length > 0) {
+     if (event.data[0] == '{') {
+       var x;
+       console.log(event.data);
+       var data = JSON.parse(event.data);
+       if (data.rooms) {
+         for (var i in data.rooms) {
+           var roomOptions;
+           var room; 
+           room = JSON.parse(data.rooms[i]);
+           console.log("ROOM"+room);
+           var center = new google.maps.LatLng(parseFloat(room.lat), parseFloat(room.lng));
+           roomOptions = {
+             strokeColor: "blue",
+             strokeOpacity: 0.6,
+             strokeWeight: 4,
+             fillColor: "#FFFFFF",
+             fillOpacity: 0.1,
+             map: map,
+             center: center,
+             radius: 180
            }
-         } else if (data.room_id) {  // create a room
-            var  room = data;
-             var center = new google.maps.LatLng(parseFloat(room.lat), parseFloat(room.lng));
-             roomOptions = {
-               strokeColor: "blue",
-               strokeOpacity: 0.6,
-               strokeWeight: 4,
-               fillColor: "#FFFFFF",
-               fillOpacity: 0.1,
-               map: map,
-               center: center,
-               radius: 180
-             }
-             roomCircle = new google.maps.Circle(roomOptions);
-             roomCircles.push(roomCircle);
-             attachEventHandlerToStop(roomCircle, room);
- 
+           roomCircle = new google.maps.Circle(roomOptions);
+           roomCircles.push(roomCircle);
+           attachEventHandlerToStop(roomCircle, room);
          }
- 
-       } else {
-          $('#chatStream').append(event.data);
-          var liveRoomId = $('#chatStream .message').last().attr("room_id");
-          if (liveRoomId ) {
-            console.log("live room id: "+liveRoomId);
-            x = roomCircles[liveRoomId];
-            console.log(x);
-            x.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
-            setTimeout(
-             function() {
-              x.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
- 
-             }, 100
-            );
-          }
-          $('#chatStream').animate({scrollTop: $('#chatStream').height()});
+       } else if (data.room_id) {  // create a room
+          var  room = data;
+           var center = new google.maps.LatLng(parseFloat(room.lat), parseFloat(room.lng));
+           roomOptions = {
+             strokeColor: "blue",
+             strokeOpacity: 0.6,
+             strokeWeight: 4,
+             fillColor: "#FFFFFF",
+             fillOpacity: 0.1,
+             map: map,
+             center: center,
+             radius: 180
+           }
+           roomCircle = new google.maps.Circle(roomOptions);
+           roomCircles.push(roomCircle);
+           attachEventHandlerToStop(roomCircle, room);
+
        }
-      }
-    };
-    
-    webSocket.onclose = function(event){
-      $("#chatStream").append('<br>Connection closed');
-    };
-   
-   
+
+     } else {
+        $('#chatStream').append(event.data);
+        var liveRoomId = $('#chatStream .message').last().attr("room_id");
+        if (liveRoomId ) {
+          console.log("live room id: "+liveRoomId);
+          x = roomCircles[liveRoomId];
+          console.log(x);
+          x.setOptions({strokeColor: "red", radius: 220, strokeWeight: 7});
+          setTimeout(
+           function() {
+            x.setOptions({strokeColor: "blue", radius: 180, strokeWeight: 4});
+
+           }, 100
+          );
+        }
+        $('#chatStream').animate({scrollTop: $('#chatStream').height()});
+     }
+    }
+  };
+  
+  webSocket.onclose = function(event){
+    $("#chatStream").append('<br>Connection closed');
+  };
+ 
+ 
   
   $("form#chat_form").submit(function(e){
     e.preventDefault();
