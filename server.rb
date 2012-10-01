@@ -1,17 +1,8 @@
-#---
-# Excerpted from "HTML5 and CSS3",
-# published by The Pragmatic Bookshelf.
-# Copyrights apply to this code. It may not be used to create training material, 
-# courses, books, articles, and the like. Contact us if you are in doubt.
-# We make no guarantees that this code is fit for any purpose. 
-# Visit http://www.pragmaticprogrammer.com/titles/bhh5 for more book information.
-#---
-# # Chat server, based on example from em-websocket-server
-# # prerequisites:
-# #   gem install em-websocket-server json
-# #
-# # run with:
-# #   ruby server.rb
+# prerequisites:
+#   gem install em-websocket-server json
+#
+# run with:
+#   ruby server.rb
 
 require 'rubygems'
 require 'em-websocket'
@@ -127,7 +118,6 @@ EventMachine.run do
 
           # Notify all clients of new room
           room = Room.new(room_id, room_name, lat, lng, 1)
-          #cmd = '/room {"id":"#{room_id}", "name":"#{name}", "lat":"#{lat}", "lng":"#{lng}", "member_count":"1"}'
           @chatroom.push room.to_json
         when "enter"
           puts "### enter"
