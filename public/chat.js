@@ -23,13 +23,15 @@ var GeoGos = {
       }
     }(this));
     google.maps.event.addListener(circle, 'mouseout', function(x) {
-       return function() {
+      return function() {
         x.circle.setOptions(x.mouseoutOpts());
       }
     }(this));
     google.maps.event.addListener(circle, 'click', function(x) {
       return function() {
         console.log("Room clicked: "+ x.info.roomId); 
+        // TODO; unselect all other rooms
+        x.selected = true;
         // GeoGos.ws.send( )
         //  "/enter "+roomInfo.room_id );
       };
