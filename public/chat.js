@@ -2,7 +2,7 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 var map;
 
-var GeoGos = {
+var geoGossip = {
   ws: null,
   currentLocation: null,
   rooms: {
@@ -20,10 +20,10 @@ var GeoGos = {
     this.mouseoutOpts = function() { return (this.selected ? this.selectedOptions : this.baseOptions); };
     this.flashOpts = function() { return (this.chatActivityOptions); };
     this.select = function() {
-      if (GeoGos.rooms.selected) 
-        GeoGos.rooms.selected.unselect();
+      if (geoGossip.rooms.selected) 
+        geoGossip.rooms.selected.unselect();
       this.selected = true;
-      GeoGos.rooms.selected = this;
+      geoGossip.rooms.selected = this;
     },
     this.unselect = function() {
       this.selected = false;
@@ -44,7 +44,7 @@ var GeoGos = {
       return function() {
         console.log("Room clicked: "+ x.info.roomId); 
         x.select();
-        // GeoGos.ws.send( )
+        // geoGossip.ws.send( )
         // /enter "+roomInfo.room_id );
       };
     }(this));
@@ -62,12 +62,12 @@ var GeoGos = {
       map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
       google.maps.event.addListener(map, 'click', function(event) { 
         var msg = {clientEvent: 'roomCreated', lat: event.latLng.lat(), lng: event.latLng.lng()}
-        GeoGos.ws.send(JSON.stringify(msg));
+        geoGossip.ws.send(JSON.stringify(msg));
       });
       if(navigator.geolocation) {
         // var browserSupportFlag = true;
         navigator.geolocation.getCurrentPosition(function(pos) {
-          GeoGos.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+          geoGossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
           $("#create_chat").show();
         }, function() { /* No geolocation */ });
       }
@@ -77,9 +77,12 @@ var GeoGos = {
     roomCreated: function(roomInfo) {
       console.log("creating room: "+ JSON.stringify(roomInfo));
       var center = new google.maps.LatLng(roomInfo.lat, roomInfo.lng);
-      var circle = new google.maps.Circle(GeoGos.map.circle.drawOptions(center));
-      var room = new GeoGos.Room(circle, roomInfo);
-      GeoGos.rooms[roomInfo.roomId] = room;
+      var circle = new google.maps.Circle(geoGossip.map.circle.drawOptions(center));
+      var room = new geoGossip.Room(circle, roomInfo);
+      geoGossip.rooms[roomInfo.roomId] = room;
+    },
+    roomsList: function(rooms) {
+      drawRooms(rooms);
     }
 
   }
@@ -109,21 +112,22 @@ function getURLParameter(name) {
 
 $(document).ready(function() {
   var webSocketURL = getURLParameter('dev') ? 'ws://localhost:9394' : 'ws://poddb.com:9394';
-  GeoGos.map.createMap();
-  GeoGos.ws = new WebSocket(webSocketURL); 
-  GeoGos.ws.onopen = function(event){
+  geoGossip.map.createMap();
+  geoGossip.ws = new WebSocket(webSocketURL); 
+  geoGossip.ws.onopen = function(event){
     $('#chatStream').append('<br>Connected to the server');
-    GeoGos.ws.send("/rooms");
+    var msg = {clientEvent: 'sesssionStarted'};
   };
 
-  GeoGos.ws.onmessage = function(event){
+  geoGossip.ws.onmessage = function(event){
     if (event.data.length > 0) {
       var x = JSON.parse(event.data);
-      var serverEvent = GeoGos.serverEvents[x.serverEvent];
+      var serverEvent = geoGossip.serverEvents[x.serverEvent];
       if (typeof serverEvent == 'function') {
-        // dynamically dispatch to one of the GeoGos.serverEvents
+        // dynamically dispatch to one of the geoGossip.serverEvents
         serverEvent(x);
       }
+      return;
 
 
       if (event.data[0] == '{') {  // We have a JSON payload and should parse it
@@ -131,29 +135,6 @@ $(document).ready(function() {
        console.log(event.data);
        var data = JSON.parse(event.data);
        // rooms list
-       if (data.rooms) {
-         for (var i in data.rooms) {
-           var roomOptions;
-           var room; 
-           room = JSON.parse(data.rooms[i]);
-           console.log("ROOM"+room);
-           var center = new google.maps.LatLng(parseFloat(room.lat), parseFloat(room.lng));
-           roomOptions = {
-             strokeColor: "blue",
-             strokeOpacity: 0.6,
-             strokeWeight: 4,
-             fillColor: "#FFFFFF",
-             fillOpacity: 0.1,
-             map: map,
-             center: center,
-             radius: 180
-           }
-           roomCircle = new google.maps.Circle(roomOptions);
-           // TODO CHANGE THIS
-           roomCircles.push(roomCircle);
-           attachEventsToCircles(roomCircle, room);
-         }
-       } 
      } else {  // receive a chat message 
         
         var message = event.data;
@@ -166,15 +147,15 @@ $(document).ready(function() {
           // TODO CHANGE
           x = roomCircles[liveRoomId];
           console.log(x);
-          x.setOptions(GeoGos.map.circle.chatActivityOptions);
-          setTimeout( function() { x.setOptions(GeoGos.map.circle.baseOptions); }, 100); 
+          x.setOptions(geoGossip.map.circle.chatActivityOptions);
+          setTimeout( function() { x.setOptions(geoGossip.map.circle.baseOptions); }, 100); 
         }
         $('#chatStream').animate({scrollTop: $('#chatStream').height()});
      }
     }
   };
   
-  GeoGos.ws.onclose = function(event){
+  geoGossip.ws.onclose = function(event){
     $("#chatStream").append('<br>Connection closed');
   };
  
@@ -185,22 +166,81 @@ $(document).ready(function() {
   $("form#chat_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#message");
-    GeoGos.ws.send(textfield.val());
+    geoGossip.ws.send(textfield.val());
     textfield.val("");
   });
 
   $("form#nick_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#nickname");
-    GeoGos.ws.send("/nick " + textfield.val());
+    geoGossip.ws.send("/nick " + textfield.val());
   });
 
   $("#create_stream").click(function(e) {
-    if (GeoGos.currentLocation) {
-      var msg = "/create_room  new_room "+GeoGos.currentLocation.lat()+" "+GeoGos.currentLocation.lng();
+    if (geoGossip.currentLocation) {
+      var msg = "/create_room  new_room "+geoGossip.currentLocation.lat()+" "+geoGossip.currentLocation.lng();
       console.log(msg);
-      GeoGos.ws.send(msg);
+      geoGossip.ws.send(msg);
     }
   });
+
+
 });
+
+
+
+
+// d3 test
+//
+
+
+function drawRooms(data) {
+  console.log("drawRooms");
+  var overlay = new google.maps.OverlayView();
+
+  // Add the container when the overlay is added to the map.
+  overlay.onAdd = function() {
+    var layer = d3.select(this.getPanes().overlayLayer).append("div")
+        .attr("class", "rooms");
+
+    // Draw each marker as a separate SVG element.
+    // We could use a single SVG, but what size would it have?
+    overlay.draw = function() {
+      var projection = this.getProjection();
+
+      console.log("projection "+JSON.stringify(data.rooms));
+      var marker = layer.selectAll("svg")
+          .data(d3.entries(data.rooms))
+          .each(transform) // update existing markers
+        .enter().append("svg:svg")
+          .each(transform)
+          .attr("class", "marker");
+
+
+      // Add a circle.
+      marker.append("svg:circle")
+          .attr("r", 4.5)
+          .attr("cx", 25)
+          .attr("cy", 25);
+
+      // Add a label.
+      marker.append("svg:text")
+          .attr("x", 33)
+          .attr("dy", 28)
+          .text(function(d) { return d.key; });
+
+      function transform(d) {
+        console.log(JSON.stringify(d));
+        d = new google.maps.LatLng(d.value.lat, d.value.lng);
+        d = projection.fromLatLngToDivPixel(d);
+        return d3.select(this)
+            .style("left", (d.x-25) + "px")
+            .style("top", (d.y-25) + "px");
+      }
+    };
+  };
+
+  // Bind our overlay to the map…
+  overlay.setMap(map);
+};
 

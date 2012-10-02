@@ -38,6 +38,7 @@ EventMachine.run do
       end
       
       @chatroom.push({time: now_time, msg: "#{chatsession[:nick]} joined!"}.to_json)
+      ws.send({serverEvent: 'roomsList', rooms: @rooms.values}.to_json)
       
       # fires when we receive a message on the channel
       ws.onmessage do |msg|
@@ -92,17 +93,11 @@ EventMachine.run do
         command = args[0]
         
         case command
-        when "/rooms"
-          msg = {rooms: @rooms}.to_json
-          ws.send msg
-
           #ws.send '{ "rooms" : [
           #             {"room_id":"1", "name":"room_1", "lat":"111", "lng""111", "member_count":"1"},
           #             {"room_id":"5", "name":"room_5", "lat":"55", "lng":"55", "member_count":"5"},
           #             {"room_id":"12", "name":"room_12", "lat":"12", "lng":"12", "member_count":"12"}
           #           ] }'
-
-        when "/create_room"
 
         when "/enter"
           puts "### enter"

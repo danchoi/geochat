@@ -38,8 +38,7 @@ height:150px;
 }
 
 #create_stream {
-	    background-attachment: scroll;
-	    background-clip: border-box;
+	    background-attachment: scroll; background-clip: border-box;
 	    background-color: transparent;
 	    background:#AD190A;
 	    background-origin: padding-box;
@@ -152,3 +151,28 @@ span.user {
 .user_alert {
     font-size: 10px;
 }
+
+
+
+
+/* circles */
+
+
+.rooms, .rooms svg {
+  position: absolute;
+}
+
+.rooms svg {
+  width:50px;
+  height:50px;
+  padding-right: 100px;
+  font: 10px sans-serif;
+}
+
+.rooms circle {
+  fill: brown;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+
