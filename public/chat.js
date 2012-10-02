@@ -54,7 +54,7 @@ var GeoGos = {
         GeoGos.ws.send(JSON.stringify(msg));
       });
       if(navigator.geolocation) {
-        browserSupportFlag = true;
+        // var browserSupportFlag = true;
         navigator.geolocation.getCurrentPosition(function(pos) {
           GeoGos.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
           $("#create_chat").show();
