@@ -44,7 +44,6 @@ var GeoGos = {
       }
     },
     createMap: function() {
-      var center;
       var latLng = new google.maps.LatLng(42.36, -71.08);
       var myOptions = { center: latLng, zoom: 12, mapTypeId: google.maps.MapTypeId.ROADMAP };
       $("#create_chat").hide();
