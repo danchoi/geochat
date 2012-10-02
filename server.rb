@@ -8,19 +8,6 @@ require 'rubygems'
 require 'em-websocket'
 require 'json'
 
-Room = Struct.new(:room_id, :name, :lat, :lng, :member_count)
-class Struct
-  def to_map
-    map = Hash.new
-    self.members.each { |m| map[m] = self[m] }
-    map
-  end
-
-  def to_json(*a)
-    to_map.to_json(*a)
-  end
-end
-
 def now_time
   Time.now.strftime("%H:%M:%S")
 end
@@ -36,7 +23,8 @@ EventMachine.run do
   # { :user_id => :room_id }
   @memberships = {}
 
-  EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 9394, :debug => true) do |ws|
+  # :debug => true turns on verbose loggin
+  EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 9394) do |ws|
 
     # fires when we open a connection
     ws.onopen do
@@ -54,8 +42,13 @@ EventMachine.run do
       # fires when we receive a message on the channel
       ws.onmessage do |msg|
         
-        if msg && msg[0] &&  msg[0].chr == "/"
+        next unless msg && msg[0]
+
+        if msg[0].chr == "/"
           parse_command(ws, msg, chatsession)
+        elsif msg[0].chr == "{"
+          json_msg = JSON.parse(msg)
+          process_client_event json_msg
         else
           @chatroom.push({room_id: @memberships[sid], nick: chatsession[:nick], time: now_time, msg:msg}.to_json)
         end
@@ -66,7 +59,20 @@ EventMachine.run do
         @chatroom.push({time: now_time, msg: "#{chatsession[:nick]} has left!"}.to_json)
         @chatroom.unsubscribe(sid)
       end
-      
+
+      def process_client_event(event)
+        case event['clientEvent']
+        when 'roomCreated'
+          puts "### clientEvent: roomCreated"
+          new_room_id = @rooms.size.to_s
+          new_room = { :roomId => new_room_id, :lat => event['lat'], :lng => event['lng'],  :member_count => 1, :channel => EM::Channel.new }
+          @rooms[new_room_id] = new_room
+          @chatroom.push new_room.delete_if{|k,v| k == :channel}.merge(serverEvent: 'roomCreated').to_json
+        else
+        end
+      end
+
+
       # command parser
       #
       # /rooms
@@ -87,13 +93,7 @@ EventMachine.run do
         
         case command
         when "/rooms"
-          rooms = []
-          @rooms.each do |room_id,v|
-            rooms += [Room.new(room_id, v[:name], v[:lat], v[:lng], v[:member_count])]
-          end
-
-          msg = %Q@{"rooms":#{rooms.collect { |r| r.to_json }}}@
-
+          msg = {rooms: @rooms}.to_json
           ws.send msg
 
           #ws.send '{ "rooms" : [
@@ -104,19 +104,6 @@ EventMachine.run do
 
         when "/create_room"
 
-          puts "### create"
-          puts parts.inspect
-
-          room_name = parts[0]
-          lat = parts[1]
-          lng = parts[2]
-
-          room_id = @rooms.size
-          @rooms[room_id] = { :room_id => room_id, :name => room_name, :lat => lat, :lng => lng,  :member_count => 1, :channel => EM::Channel.new }
-
-          # Notify all clients of new room
-          room = Room.new(room_id, room_name, lat, lng, 1)
-          @chatroom.push room.to_json
         when "/enter"
           puts "### enter"
 
@@ -166,6 +153,4 @@ EventMachine.run do
   puts "Chat server started"
 end
 
-class Room
-end
 
