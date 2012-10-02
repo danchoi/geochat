@@ -21,6 +21,10 @@ class Struct
   end
 end
 
+def now_time
+  Time.now.strftime("%H:%M:%S")
+end
+
 EventMachine.run do
   
   # create a chatroom object. Shared by every connection
@@ -45,9 +49,7 @@ EventMachine.run do
         ws.send msg 
       end
       
-      @chatroom.push %Q{
-        <div class='user_alert'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='content'>#{chatsession[:nick]} joined!</span></div>
-      }
+      @chatroom.push({time: now_time, msg: "#{chatsession[:nick]} joined!"}.to_json)
       
       # fires when we receive a message on the channel
       ws.onmessage do |msg|
@@ -55,18 +57,14 @@ EventMachine.run do
         if msg && msg[0] &&  msg[0].chr == "/"
           parse_command(ws, msg, chatsession)
         else
-          @chatroom.push( %Q{
-          <div room_id='#{@memberships[sid]}' class='message'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='user'>#{chatsession[:nick]}</span><span class='content'>#{msg}</span></div>
-          } )
+          @chatroom.push({room_id: @memberships[sid], nick: chatsession[:nick], time: now_time, msg:msg}.to_json)
         end
       end
       
       # fires when someone leaves
       ws.onclose do
+        @chatroom.push({time: now_time, msg: "#{chatsession[:nick]} has left!"}.to_json)
         @chatroom.unsubscribe(sid)
-        @chatroom.push %Q{
-          <div class='user_alert'><span class='timecode'>#{Time.now.strftime("%H:%M:%S")}</span><span class='content'>User #{chatsession[:nick]} has left</span></div>
-        }
       end
       
       # command parser
@@ -74,7 +72,7 @@ EventMachine.run do
       # /rooms
       #   { "rooms" : [ { "room_id":"1", "name":"room_1", "lat":"1", "lng":"1", "member_count":"1" }, ... ] }
       #
-      # /create name lat lng
+      # /create JSON {name:name, lat:lat, lng:lng}
       #   { "room" : { "room_id":"1", "name":"room_1", "lat":"1", "lng":"1", "member_count":"1" } }
       # Also notifies users of the new room:
       #   { "room" : { ... } }
@@ -84,13 +82,11 @@ EventMachine.run do
       # /exit room_id
       #
       def parse_command(ws, msg, chatsession)
-        parts = msg.split(" ")
-        command = parts.delete(parts[0])
-        command = command[1..-1] # strip the /
-        options = parts.join(" ")
+        args = msg.split(/\s+/, 3)[0]
+        command = args[0]
+        
         case command
-        when "rooms"
-
+        when "/rooms"
           rooms = []
           @rooms.each do |room_id,v|
             rooms += [Room.new(room_id, v[:name], v[:lat], v[:lng], v[:member_count])]
@@ -105,7 +101,9 @@ EventMachine.run do
           #             {"room_id":"5", "name":"room_5", "lat":"55", "lng":"55", "member_count":"5"},
           #             {"room_id":"12", "name":"room_12", "lat":"12", "lng":"12", "member_count":"12"}
           #           ] }'
-        when "create"
+
+        when "/create_room"
+
           puts "### create"
           puts parts.inspect
 
@@ -113,17 +111,16 @@ EventMachine.run do
           lat = parts[1]
           lng = parts[2]
 
-          room_id = @rooms.size.to_s  #Todo: sync
+          room_id = @rooms.size
           @rooms[room_id] = { :room_id => room_id, :name => room_name, :lat => lat, :lng => lng,  :member_count => 1, :channel => EM::Channel.new }
 
           # Notify all clients of new room
           room = Room.new(room_id, room_name, lat, lng, 1)
           @chatroom.push room.to_json
-        when "enter"
+        when "/enter"
           puts "### enter"
-          puts options
 
-          room_id = options
+          room_id = args[1]
           room = @rooms[room_id]
 
           # Todo: if !room
@@ -135,12 +132,12 @@ EventMachine.run do
           end
           room[:member_count] += 1
 
-          @memberships[sid] = room_id
+          @memberships[sid] = room_id.to_i
 
           # Reply
           ws.send "Changed your room to #{room[:name]}"
           channel.push "#{chatsession[:nick]} has joined the room"
-        when "exit"
+        when "/exit"
           puts "### exit"
           puts options
 

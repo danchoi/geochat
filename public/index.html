@@ -24,6 +24,23 @@
       <p><a href="http://twitter.com/{{ twitter }}">@{{ twitter }}</a></p>
     </li>
   </script>
+  
+  <script id="message" type="text/html">
+    <div room_id='{{room_id}}' class='message'>
+      <span class='timecode'>{{time}}</span>
+      <span class='user'>{{nick}}</span>
+      <span class='content'>{{msg}}</span>
+    </div>
+  </script>
+
+  <script id="user_alert" type="text/html">
+    <div room_id='{{room_id}}' class='user_alert'>
+      <span class='timecode'>{{time}}</span>
+      <span class='user'>{{nick}}</span>
+      <span class='content'>{{msg}}</span>
+    </div>
+  </script>
+
 
 
 </head>
