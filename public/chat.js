@@ -5,7 +5,9 @@ var map;
 var GeoGos = {
   ws: null,
   currentLocation: null,
-  rooms: {},
+  rooms: {
+    selected: null
+  },
   Room: function (circle, roomInfo) { // a constructor
     this.circle =  circle;
     this.info = roomInfo;
@@ -17,6 +19,17 @@ var GeoGos = {
     this.mouseoverOpts = function() { return (this.hoverOptions); };
     this.mouseoutOpts = function() { return (this.selected ? this.selectedOptions : this.baseOptions); };
     this.flashOpts = function() { return (this.chatActivityOptions); };
+    this.select = function() {
+      if (GeoGos.rooms.selected) 
+        GeoGos.rooms.selected.unselect();
+      this.selected = true;
+      GeoGos.rooms.selected = this;
+    },
+    this.unselect = function() {
+      this.selected = false;
+      console.log("This Unselecting");
+      this.circle.setOptions(this.baseOptions);
+    }
     google.maps.event.addListener(circle, 'mouseover', function(x) {
       return function() {
         return x.circle.setOptions(x.mouseoverOpts());
@@ -30,10 +43,9 @@ var GeoGos = {
     google.maps.event.addListener(circle, 'click', function(x) {
       return function() {
         console.log("Room clicked: "+ x.info.roomId); 
-        // TODO; unselect all other rooms
-        x.selected = true;
+        x.select();
         // GeoGos.ws.send( )
-        //  "/enter "+roomInfo.room_id );
+        // /enter "+roomInfo.room_id );
       };
     }(this));
   },
