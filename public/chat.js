@@ -1,10 +1,6 @@
 WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
-var rooms = [{"room_id": 3, "lat": 42.36, "lng": -71.07}, {"room_id": 4, "lat": 42.36, "lng": -71.08}, {"lat": 42.32, "lng": -71.08, "room_id": 5}
-];
-
 var map;
-
 
 var GeoGos = {
   ws: null,
