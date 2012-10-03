@@ -9,26 +9,35 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
+
 type Client = (Text, WS.Sink WS.Hybi00)
 type ServerState = [Client]
+
 newServerState :: ServerState
 newServerState = []
+
 numClients :: ServerState -> Int
 numClients = length
+
 clientExists :: Client -> ServerState -> Bool
 clientExists client = any ((== fst client) . fst)
+
 addClient :: Client -> ServerState -> ServerState
 addClient client clients = client : clients
+
 removeClient :: Client -> ServerState -> ServerState
 removeClient client = filter ((/= fst client) . fst)
+
 broadcast :: Text -> ServerState -> IO ()
 broadcast message clients = do
     T.putStrLn message
     forM_ clients $ \(_, sink) -> WS.sendSink sink $ WS.textData message
+
 main :: IO ()
 main = do
     state <- newMVar newServerState
     WS.runServer "0.0.0.0" 9160 $ application state
+
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
 application state rq = do
     WS.acceptRequest rq
