@@ -1,0 +1,13 @@
+Name: geogossip-server
+Version: 0.1
+
+Synopsis: Websocket server for Geogossip project
+Description:
+  A rewrite of the Ruby Eventmachine using Haskell.
+Author: Daniel Choi
+Maintainer: dhchoi@gmail.com
+Cabal-Version: >= 1.2
+library
+  Exposed-Modules: 
+  Build-Depends: websockets > 0.6
+
