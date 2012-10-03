@@ -11,27 +11,30 @@ import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
 
 type Client = (Text, WS.Sink WS.Hybi00)
-type ServerState = [Client]
+
+data ServerState = ServerState { clients :: [Client] }
 
 newServerState :: ServerState
-newServerState = []
+newServerState = ServerState { clients = [] }
 
 numClients :: ServerState -> Int
-numClients = length
+numClients = length . clients
 
 clientExists :: Client -> ServerState -> Bool
-clientExists client = any ((== fst client) . fst)
+clientExists client st = any ((== fst client) . fst) $ clients st
 
 addClient :: Client -> ServerState -> ServerState
-addClient client clients = client : clients
+addClient client s = s { clients = client:(clients s) }
 
 removeClient :: Client -> ServerState -> ServerState
-removeClient client = filter ((/= fst client) . fst)
+removeClient client s = 
+  s { clients = clients' }
+    where clients' = filter ((/= fst client) . fst) $ (clients s)
 
 broadcast :: Text -> ServerState -> IO ()
-broadcast message clients = do
+broadcast message state = do
     T.putStrLn message
-    forM_ clients $ \(_, sink) -> WS.sendSink sink $ WS.textData message
+    forM_ (clients state) $ \(_, sink) -> WS.sendSink sink $ WS.textData message
 
 main :: IO ()
 main = do
@@ -44,7 +47,7 @@ application state rq = do
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
     sink <- WS.getSink
     msg <- WS.receiveData
-    clients <- liftIO $ readMVar state
+    s <- liftIO $ readMVar state
     case msg of
         _   | not (prefix `T.isPrefixOf` msg) ->
                 WS.sendTextData ("Wrong announcement" :: Text)
@@ -53,16 +56,16 @@ application state rq = do
                     WS.sendTextData ("Name cannot " `mappend`
                         "contain punctuation or whitespace, and " `mappend`
                         "cannot be empty" :: Text)
-            | clientExists client clients ->
+            | clientExists client s ->
                 WS.sendTextData ("User already exists" :: Text)
             | otherwise -> do
-               liftIO $ modifyMVar_ state $ \s -> do
-                   let s' = addClient client s
+               liftIO $ modifyMVar_ state $ \st -> do
+                   let st' = addClient client st
                    WS.sendSink sink $ WS.textData $
                        "Welcome! Users: " `mappend`
-                       T.intercalate ", " (map fst s)
-                   broadcast (fst client `mappend` " joined") s'
-                   return s'
+                       T.intercalate ", " (map fst (clients st))
+                   broadcast (fst client `mappend` " joined") st'
+                   return st'
                talk state client
           where
             prefix = "Hi! I am "
