@@ -67,6 +67,7 @@ application state rq = do
           where
             prefix = "Hi! I am "
             client = (T.drop (T.length prefix) msg, sink)
+
 talk :: WS.Protocol p => MVar ServerState -> Client -> WS.WebSockets p ()
 talk state client@(user, _) = flip WS.catchWsError catchDisconnect $ do
     msg <- WS.receiveData
