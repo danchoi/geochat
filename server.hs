@@ -10,7 +10,17 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
 
-type Client = (Text, WS.Sink WS.Hybi00)
+type LatLng = (Double, Double)
+
+data Room = Room { 
+              latLng :: LatLng 
+            } deriving (Show)
+
+data Client = Client { 
+                nickname :: Text
+              , getSink :: WS.Sink WS.Hybi00
+              , getRoom :: Maybe Room 
+              }
 
 data ServerState = ServerState { clients :: [Client] }
 
@@ -21,7 +31,7 @@ numClients :: ServerState -> Int
 numClients = length . clients
 
 clientExists :: Client -> ServerState -> Bool
-clientExists client st = any ((== fst client) . fst) $ clients st
+clientExists client st = any ((== (nickname client)) . nickname) $ clients st
 
 addClient :: Client -> ServerState -> ServerState
 addClient client s = s { clients = client:(clients s) }
@@ -29,12 +39,12 @@ addClient client s = s { clients = client:(clients s) }
 removeClient :: Client -> ServerState -> ServerState
 removeClient client s = 
   s { clients = clients' }
-    where clients' = filter ((/= fst client) . fst) $ (clients s)
+    where clients' = filter ((/= (nickname client)) . nickname) $ (clients s)
 
 broadcast :: Text -> ServerState -> IO ()
 broadcast message state = do
     T.putStrLn message
-    forM_ (clients state) $ \(_, sink) -> WS.sendSink sink $ WS.textData message
+    forM_ (clients state) $ \client -> WS.sendSink (getSink client) $ WS.textData message
 
 main :: IO ()
 main = do
@@ -51,7 +61,7 @@ application state rq = do
     case msg of
         _   | not (prefix `T.isPrefixOf` msg) ->
                 WS.sendTextData ("Wrong announcement" :: Text)
-            | any ($ fst client)
+            | any ($ nickname client)
                 [T.null, T.any isPunctuation, T.any isSpace] ->
                     WS.sendTextData ("Name cannot " `mappend`
                         "contain punctuation or whitespace, and " `mappend`
@@ -63,24 +73,24 @@ application state rq = do
                    let st' = addClient client st
                    WS.sendSink sink $ WS.textData $
                        "Welcome! Users: " `mappend`
-                       T.intercalate ", " (map fst (clients st))
-                   broadcast (fst client `mappend` " joined") st'
+                       T.intercalate ", " (map nickname (clients st))
+                   broadcast (nickname client `mappend` " joined") st'
                    return st'
                talk state client
           where
             prefix = "Hi! I am "
-            client = (T.drop (T.length prefix) msg, sink)
+            client = Client { nickname = (T.drop (T.length prefix) msg), getSink = sink, getRoom = Nothing }
 
 talk :: WS.Protocol p => MVar ServerState -> Client -> WS.WebSockets p ()
-talk state client@(user, _) = flip WS.catchWsError catchDisconnect $ do
+talk state client = flip WS.catchWsError catchDisconnect $ do
     msg <- WS.receiveData
     liftIO $ readMVar state >>= broadcast
-        (user `mappend` ": " `mappend` msg)
+        ((nickname client)  `mappend` ": " `mappend` msg)
     talk state client
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ \s -> do
             let s' = removeClient client s
-            broadcast (user `mappend` " disconnected") s'
+            broadcast ((nickname client) `mappend` " disconnected") s'
             return s'
         _ -> return ()
