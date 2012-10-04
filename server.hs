@@ -18,8 +18,8 @@ data Room = Room {
 
 data Client = Client { 
                 nickname :: Text
-              , getSink :: WS.Sink WS.Hybi00
-              , getRoom :: Maybe Room 
+              , clientSink :: WS.Sink WS.Hybi00
+              , clientRoom :: Maybe Room 
               }
 
 data ServerState = ServerState { clients :: [Client] }
@@ -42,9 +42,10 @@ removeClient client s =
     where clients' = filter ((/= (nickname client)) . nickname) $ (clients s)
 
 broadcast :: Text -> ServerState -> IO ()
+-- TODO make a new function to broadcast to rooms only
 broadcast message state = do
     T.putStrLn message
-    forM_ (clients state) $ \client -> WS.sendSink (getSink client) $ WS.textData message
+    forM_ (clients state) $ \client -> WS.sendSink (clientSink client) $ WS.textData message
 
 main :: IO ()
 main = do
@@ -79,7 +80,7 @@ application state rq = do
                talk state client
           where
             prefix = "Hi! I am "
-            client = Client { nickname = (T.drop (T.length prefix) msg), getSink = sink, getRoom = Nothing }
+            client = Client { nickname = (T.drop (T.length prefix) msg), clientSink = sink, clientRoom = Nothing }
 
 talk :: WS.Protocol p => MVar ServerState -> Client -> WS.WebSockets p ()
 talk state client = flip WS.catchWsError catchDisconnect $ do
