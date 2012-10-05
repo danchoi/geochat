@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+
+module Main where
+
 import Data.Char (isPunctuation, isSpace)
 import Data.Monoid (mappend)
 import Data.Text (Text)
