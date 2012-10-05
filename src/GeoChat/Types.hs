@@ -5,6 +5,10 @@ module GeoChat.Types where
 import Data.Text (Text)
 import qualified Network.WebSockets as WS
 
+
+instance Show (WS.Sink a) where
+    show _ = "[WS.Sink value]"
+
 type LatLng = (Double, Double)
 
 data Room = Room { roomId :: Int 
@@ -16,7 +20,7 @@ data Client = Client { clientId :: Int
                      , nickname :: Text
                      , clientSink :: Maybe (WS.Sink WS.Hybi00)
                      , clientRoom :: Maybe Room 
-                     }
+                     } deriving (Show)
 type RoomId = Int
 type ClientId = Int
 
