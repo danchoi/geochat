@@ -74,7 +74,8 @@ application state rq = do
             prefix = "Hi! I am "
             client = Client { clientId = Nothing
                             , nickname = (T.drop (T.length prefix) msg)
-                            , clientSink = sink, clientRoom = Nothing }
+                            , clientSink = sink
+                            , clientRoom = Nothing }
 
 talk :: WS.Protocol p => MVar ServerState -> Client -> WS.WebSockets p ()
 talk state client = flip WS.catchWsError catchDisconnect $ do

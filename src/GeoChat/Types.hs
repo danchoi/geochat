@@ -9,6 +9,7 @@ type LatLng = (Double, Double)
 
 data Room = Room { roomId :: Maybe Int 
                  , latLng :: LatLng 
+                 , numParticipants :: Int
                  } deriving (Show)
 
 data Client = Client { clientId :: Maybe Int
@@ -18,8 +19,13 @@ data Client = Client { clientId :: Maybe Int
                      }
 type RoomId = Int
 
-data Message = ListRooms 
-             | Enter RoomId
-             | Exit RoomId
-             | ChangeNickname String
+data MessageFromClient = ListRooms 
+                       | Enter RoomId
+                       | Exit RoomId
+                       | ChangeNickname Text
+                       | ChatMessage Text
 
+data MessageFromServer = ListOfRooms [Room]
+                       | BroadcastToRoom Room Text
+
+                                              
