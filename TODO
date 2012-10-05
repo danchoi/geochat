@@ -4,4 +4,15 @@
 
   Ultimately I want the chat server to use PostgreSQL for state and persistence.
 
+- Join Snap with Websockets with this:
+
+  http://hackage.haskell.org/packages/archive/websockets-snap/0.7.0.0/doc/html/Network-WebSockets-Snap.html
+
+
+  runWebSocketsSnap :: Protocol p => (Request -> WebSockets p ()) -> Snap ()Source
+
+  The following function escapes from the current Snap handler, and continues
+  processing the WebSockets action. The action to be executed takes the Request
+  as a parameter, because snap has already read this from the socket. 
+
 
