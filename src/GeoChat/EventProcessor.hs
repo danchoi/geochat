@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module GeoChat.EventProcessor where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Control.Monad (forM_)
+import Control.Monad (forM_, liftM)
 import GeoChat.Types
 import Database.PostgreSQL.Simple
 
@@ -29,12 +30,37 @@ clientExists conn nickname = do
 
 -- We need database IO so this is in the IO Monad
 
-processMsg :: MessageFromClient -> IO MessageFromServer
-processMsg ListActiveRooms = undefined
-processMsg (Enter cid rid) = undefined
-processMsg (Exit cid rid) = undefined
-processMsg (ChangeNickname newnick) = undefined
-processMsg (PostMessage cid msg) = undefined
+processMsg :: Connection -> MessageFromClient -> IO MessageFromServer
+processMsg conn ListActiveRooms = undefined
+
+
+-- e.g. processMsg c (NewClient $ Text.pack "dan2")
+processMsg conn (NewClient newNick) = do
+    let q = "insert into clients (nickname) values (?) returning client_id, nickname"
+    xs :: [(Int, Text)] <- query conn q [newNick]
+    return $ NewClientCreated (Client { clientId = ((fst . head) xs)
+                                      , nickname = newNick
+                                      , clientSink = Nothing
+                                      , clientRoom = Nothing })
+
+processMsg conn (CreateRoom (lat, lng)) = do
+    let q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
+    xs :: [Only Int] <- query conn q (lat, lng)
+    return $ NewRoom (Room { roomId = (fromOnly $ head xs)
+                           , latLng = (lat, lng)
+                           , numParticipants = 0})
+
+
+processMsg conn (Enter cid rid) = do
+    execute conn "update clients set room_id = ? where client_id = ?" (rid, cid)
+    xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
+    let latLng = head xs 
+    let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
+    return $ UpdatedRoom room
+
+processMsg conn (Exit cid rid) = undefined
+processMsg conn (ChangeNickname newnick) = undefined
+processMsg conn (PostMessage cid msg) = undefined
 
 
 -- add association between client and room in db

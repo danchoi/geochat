@@ -102,7 +102,7 @@ EventMachine.run do
         when "/enter"
           puts "### enter"
 
-          room_id = args[1]
+          room_id = args[3]
           room = @rooms[room_id]
 
           # Todo: if !room
