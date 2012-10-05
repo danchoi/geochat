@@ -1,25 +1,29 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module GeoChat.EventProcessor where
 
+import Data.Text (Text)
+import qualified Data.Text as Text
+import Control.Monad (forM_)
 import GeoChat.Types
+import Database.PostgreSQL.Simple
+
 
 -- TODO Change these functions to work with PostgresQL
 
-clientExists :: Client -> ServerState -> Bool
-clientExists client st = any ((== (nickname client)) . nickname) $ clients st
+connectInfo :: ConnectInfo
+connectInfo = defaultConnectInfo { connectDatabase = "geochat"
+                                 , connectUser = "choi" }
+dbconn :: IO Connection
+dbconn = connect connectInfo
 
-addClient :: Client -> ServerState -> ServerState
-addClient client s = s { clients = client:(clients s) }
+clientExists :: Connection -> Text -> IO Bool
+clientExists conn nickname = do
+    xs <- query conn "select client_id, nickname from clients where nickname = ?" [nickname]
+    forM_ xs $ \(cid, cnickname) -> 
+      putStrLn $ show (cid :: Int) ++ " " ++  cnickname 
+    return (length xs == 1)
 
-removeClient :: Client -> ServerState -> ServerState
-removeClient client s = 
-  s { clients = clients' }
-    where clients' = filter ((/= (nickname client)) . nickname) $ (clients s)
-
-broadcast :: Text -> ServerState -> IO ()
--- TODO make a new function to broadcast to rooms only
-broadcast message state = do
-    T.putStrLn message
-    forM_ (clients state) $ \client -> WS.sendSink (clientSink client) $ WS.textData message
 
 
 

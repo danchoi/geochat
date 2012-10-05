@@ -11,8 +11,9 @@ Library
   Hs-Source-Dirs: src
   GHC-Options: -Wall 
   Exposed-Modules: 
-    GeoChatTypes
+    GeoChat.Types
   Build-Depends: 
     websockets > 0.6,
-    aeson >= 0.3.2.6
+    aeson >= 0.3.2.6,
+    postgresql-simple >= 0.2.4.1
 
