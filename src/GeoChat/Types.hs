@@ -18,14 +18,20 @@ data Client = Client { clientId :: Maybe Int
                      , clientRoom :: Maybe Room 
                      }
 type RoomId = Int
+type ClientId = Int
 
-data MessageFromClient = ListRooms 
-                       | Enter RoomId
-                       | Exit RoomId
+data MessageFromClient = ListActiveRooms   -- TODO scope by latLng center
+                       | Enter ClientId RoomId 
+                       | Exit ClientId RoomId 
+                       | NewClient Text -- nickname 
                        | ChangeNickname Text
-                       | ChatMessage Text
+                       | PostMessage ClientId Text
 
-data MessageFromServer = ListOfRooms [Room]
+data MessageFromServer = ListOfActiveRooms [Room]
+                       | RoomActivity Room
                        | BroadcastToRoom Room Text
+                       | NewRoom Room
+                       | UpdatedRoom Room
+                       | DeadRoom Room
 
                                               
