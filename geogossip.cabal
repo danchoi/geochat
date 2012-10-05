@@ -7,7 +7,12 @@ Description:
 Author: Daniel Choi
 Maintainer: dhchoi@gmail.com
 Cabal-Version: >= 1.2
-library
+Library
+  Hs-Source-Dirs: src
+  GHC-Options: -Wall 
   Exposed-Modules: 
-  Build-Depends: websockets > 0.6
+    GeoChatTypes
+  Build-Depends: 
+    websockets > 0.6,
+    aeson >= 0.3.2.6
 

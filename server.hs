@@ -12,15 +12,12 @@ import qualified Network.WebSockets as WS
 
 type LatLng = (Double, Double)
 
-data Room = Room { 
-              latLng :: LatLng 
-            } deriving (Show)
+data Room = Room { latLng :: LatLng } deriving (Show)
 
-data Client = Client { 
-                nickname :: Text
-              , clientSink :: WS.Sink WS.Hybi00
-              , clientRoom :: Maybe Room 
-              }
+data Client = Client { nickname :: Text
+                     , clientSink :: WS.Sink WS.Hybi00
+                     , clientRoom :: Maybe Room 
+                     }
 
 data ServerState = ServerState { clients :: [Client] }
 

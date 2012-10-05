@@ -1,0 +1,7 @@
+
+
+- Change the websocket server to use MonadIO instead of MVar.
+
+  Ultimately I want the chat server to use PostgreSQL for state and persistence.
+
+
