@@ -78,25 +78,22 @@ instance ToJSON MessageFromServer where
 
 {- 
 
- (decode $ pack "{\"type\": \"Enter\", \"clientId\": 2, \"roomId\": 3}")::Maybe MessageFromClient
- Just (Enter 2 3)
+(decode $ pack "{\"type\": \"Enter\", \"clientId\": 2, \"roomId\": 3}")::Maybe MessageFromClient
+Just (Enter 2 3)
 
- (decode $ pack "{\"type\": \"CreateRoom\", \"lat\": 43.3, \"lng\": -70.1}")::Maybe MessageFromClient
- Just (CreateRoom (43.3,-70.1))
--}
+(decode $ pack "{\"type\": \"CreateRoom\", \"lat\": 43.3, \"lng\": -70.1}")::Maybe MessageFromClient
+Just (CreateRoom (43.3,-70.1))
 
-{-
-  encode (NewClientCreated Client { clientId = 12, nickname = Text.pack "dan" , clientSink = Nothing , clientRoom = Nothing})
-  Chunk "{\"clientId\":12,\"type\":\"NewClientCreated\"}" Empty
+encode (NewClientCreated Client { clientId = 12, nickname = Text.pack "dan" , clientSink = Nothing , clientRoom = Nothing})
+Chunk "{\"clientId\":12,\"type\":\"NewClientCreated\"}" Empty
 
-  Experiment:
-  encode (ListOfActiveRooms [])
+Experiment:
+encode (ListOfActiveRooms [])
 
 encode (ListOfActiveRooms [Room { roomId = 3 , latLng = (40.2, -71.2), numParticipants = 0}])
 Chunk "{\"rooms\":[{\"latLng\":[40.2,-71.2],\"numParticipants\":0,\"roomId\":3}],\"type\":\"ListOfActiveRooms\"}" Empty
 
 encode (RoomActivity Room { roomId = 3 , latLng = (40.2, -71.2), numParticipants = 0})
-
 
 -}
 
