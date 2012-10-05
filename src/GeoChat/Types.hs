@@ -74,8 +74,6 @@ instance ToJSON MessageFromServer where
   toJSON (DeadRoom room) = object ["type" .= ("DeadRoom" :: Text), "room" .= room]
   toJSON (Broadcast room text) = object ["type" .= ("BroadCast" :: Text), "room" .= room, "text" .= text]
 
-
-
 {- 
 
 (decode $ pack "{\"type\": \"Enter\", \"clientId\": 2, \"roomId\": 3}")::Maybe MessageFromClient

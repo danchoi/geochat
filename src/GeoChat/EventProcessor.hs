@@ -70,30 +70,11 @@ processMsg conn (Exit cid rid) = do
     return $ UpdatedRoom room
 
 processMsg conn (ChangeNickname newnick) = undefined
+
 processMsg conn (PostMessage cid msg) = undefined
 
 
--- add association between client and room in db
--- return updated Room record
--- return RoomUpdated message to clients with Room record
--- nickname should be unique per room, not per clients table in postgres
-addClientToRoom :: Connection -> Client -> Room -> IO MessageFromServer
-addClientToRoom conn client room = undefined
 
-removeClientFromRoom :: Connection -> Client -> Room -> IO MessageFromServer 
-removeClientFromRoom conn client room = undefined
-
--- save in postgres, contruct record and return NewRoom 
-addRoom :: Connection -> LatLng -> IO MessageFromServer
-addRoom conn latlng = undefined
-
-
--- should WS.sendSink be called here?
--- find all clients in the room and WS.sendSink to their sinks
--- Maybe need a SinkMap Map type 
--- Log message in postgresql with room_id fk, and then send to all sinks
-broadcastToRoom :: Connection -> Room -> Text -> MessageFromServer
-broadcastToRoom conn room message = undefined
 
 
 
