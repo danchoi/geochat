@@ -73,9 +73,8 @@ processMsg conn (ChangeNickname newnick) = undefined
 
 processMsg conn (PostMessage cid msg) = undefined
 
-
-
-
-
+-- processMsg conn _ = return (ErrorMessage "Unknown Error")
+-- This throws and error:     Warning: Pattern match(es) are overlapped
+--
 
 

@@ -63,7 +63,9 @@ data MessageFromServer = ListOfActiveRooms [Room]
                        | RoomActivity Room
                        | Broadcast Room Text -- need to add author or make ChatMessage type
                        | UpdatedRoom Room
-                       | DeadRoom Room deriving (Show)
+                       | DeadRoom Room 
+                       | ErrorMessage { errMessage :: String } 
+                       deriving (Show)
 
 instance ToJSON MessageFromServer where
   toJSON (ListOfActiveRooms rooms) = object ["type" .= ("ListOfActiveRooms" :: Text), "rooms" .= (fromList rooms)]
