@@ -39,35 +39,37 @@ type RoomId = Int
 type ClientId = Int
 
 data MessageFromClient = ListActiveRooms   -- TODO scope by latLng center
+                       | NewClient Text -- nickname 
                        | CreateRoom LatLng
                        | Enter ClientId RoomId 
                        | Exit ClientId RoomId 
-                       | NewClient Text -- nickname 
                        | ChangeNickname Text
                        | PostMessage ClientId Text deriving (Show)
 
 instance FromJSON MessageFromClient where
   parseJSON (Object v) 
-    | Just "Enter" <- M.lookup "type" v = Enter <$> v .: "clientId" <*> v .: "roomId"
-    | Just "Exit" <- M.lookup "type" v = Exit <$> v .: "clientId" <*> v .: "roomId"
     | Just "NewClient" <- M.lookup "type" v = NewClient <$> v .: "nickname" 
     | Just "CreateRoom" <- M.lookup "type" v = CreateRoom <$> ((,) <$> v .: "lat" <*>  v .: "lng")
+    | Just "Enter" <- M.lookup "type" v = Enter <$> v .: "clientId" <*> v .: "roomId"
+    | Just "Exit" <- M.lookup "type" v = Exit <$> v .: "clientId" <*> v .: "roomId"
     | otherwise  = mzero
   parseJSON _ = mzero
 
+-- TODO MessageFromServer needs list of Client sinks to broadcast to
+
 data MessageFromServer = ListOfActiveRooms [Room]
                        | NewClientCreated Client
+                       | NewRoom Room
                        | RoomActivity Room
                        | Broadcast Room Text -- need to add author or make ChatMessage type
-                       | NewRoom Room
                        | UpdatedRoom Room
                        | DeadRoom Room deriving (Show)
 
 instance ToJSON MessageFromServer where
   toJSON (ListOfActiveRooms rooms) = object ["type" .= ("ListOfActiveRooms" :: Text), "rooms" .= (fromList rooms)]
   toJSON (NewClientCreated c) = object ["type" .= ("NewClientCreated" :: Text), "client" .= c]
-  toJSON (RoomActivity room) = object ["type" .= ("RoomActivity" :: Text), "room" .= room]
   toJSON (NewRoom room) = object ["type" .= ("NewRoom" :: Text), "room" .= room]
+  toJSON (RoomActivity room) = object ["type" .= ("RoomActivity" :: Text), "room" .= room]
   toJSON (UpdatedRoom room) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room]
   toJSON (DeadRoom room) = object ["type" .= ("DeadRoom" :: Text), "room" .= room]
   toJSON (Broadcast room text) = object ["type" .= ("BroadCast" :: Text), "room" .= room, "text" .= text]

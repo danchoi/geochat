@@ -51,6 +51,8 @@ processMsg conn (CreateRoom (lat, lng)) = do
                            , latLng = (lat, lng)
                            , numParticipants = 0})
 
+-- TODO change hardcoded numParticipants
+
 processMsg conn (Enter cid rid) = do
     execute conn "update clients set room_id = ? where client_id = ?" (rid, cid)
     xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
