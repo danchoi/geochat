@@ -35,7 +35,7 @@ data MessageFromClient = ListActiveRooms   -- TODO scope by latLng center
 data MessageFromServer = ListOfActiveRooms [Room]
                        | NewClientCreated Client
                        | RoomActivity Room
-                       | BroadcastToRoom Room Text
+                       | BroadcastToRoom Room Text -- need to add author or make ChatMessage type
                        | NewRoom Room
                        | UpdatedRoom Room
                        | DeadRoom Room

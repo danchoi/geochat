@@ -31,10 +31,11 @@ clientExists conn nickname = do
 -- We need database IO so this is in the IO Monad
 
 processMsg :: Connection -> MessageFromClient -> IO MessageFromServer
+
 processMsg conn ListActiveRooms = undefined
 
-
 -- e.g. processMsg c (NewClient $ Text.pack "dan2")
+
 processMsg conn (NewClient newNick) = do
     let q = "insert into clients (nickname) values (?) returning client_id, nickname"
     xs :: [(Int, Text)] <- query conn q [newNick]
@@ -50,7 +51,6 @@ processMsg conn (CreateRoom (lat, lng)) = do
                            , latLng = (lat, lng)
                            , numParticipants = 0})
 
-
 processMsg conn (Enter cid rid) = do
     execute conn "update clients set room_id = ? where client_id = ?" (rid, cid)
     xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
@@ -58,7 +58,15 @@ processMsg conn (Enter cid rid) = do
     let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
     return $ UpdatedRoom room
 
-processMsg conn (Exit cid rid) = undefined
+processMsg conn (Exit cid rid) = do
+    execute conn "update clients set room_id = null where client_id = ?" [cid]
+    -- TODO fill in number of participants
+    -- DRY up code with common method to get room data?
+    xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
+    let latLng = head xs 
+    let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
+    return $ UpdatedRoom room
+
 processMsg conn (ChangeNickname newnick) = undefined
 processMsg conn (PostMessage cid msg) = undefined
 
