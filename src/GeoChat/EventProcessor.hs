@@ -10,10 +10,6 @@ import GeoChat.Types
 import Database.PostgreSQL.Simple
 
 
--- TODO Change these functions to work with PostgresQL
--- TODO keep a Map of clientId :: Int to WS.sink
--- functions will look up list of client ids from DB to broadcast to 
-
 connectInfo :: ConnectInfo
 connectInfo = defaultConnectInfo { connectDatabase = "geochat"
                                  , connectUser = "choi" }
@@ -29,11 +25,11 @@ clientExists conn nickname = do
     return (length xs == 1)
 -}
 
-processMsg :: Connection -> MessageFromClient -> IO MessageFromServer
+processMsg :: Connection -> Client -> MessageFromClient -> IO MessageFromServer
 
-processMsg conn ListActiveRooms = undefined
+processMsg conn client ListActiveRooms = undefined
 
-processMsg conn (NewClient newNick) = do
+processMsg conn client (NewClient newNick) = do
     let q = "insert into clients (nickname) values (?) returning client_id, nickname"
     xs :: [(Int, Text)] <- query conn q [newNick]
     return $ NewClientCreated (Client { clientId = ((fst . head) xs)
@@ -41,34 +37,27 @@ processMsg conn (NewClient newNick) = do
                                       , clientSink = Nothing
                                       , clientRoom = Nothing })
 
-processMsg conn (CreateRoom (lat, lng)) = do
+processMsg conn client (CreateRoom (lat, lng)) = do
     let q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
     xs :: [Only Int] <- query conn q (lat, lng)
     return $ NewRoom (Room { roomId = (fromOnly $ head xs)
                            , latLng = (lat, lng)
                            , numParticipants = 0})
 
--- TODO change hardcoded numParticipants
+-- TODO will need to send back list of possibly pair of updated rooms
 
-processMsg conn (Enter cid rid) = do
-    execute conn "update clients set room_id = ? where client_id = ?" (rid, cid)
+processMsg conn client (ChangeRoom (Just rid)) = do
+    execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
+
     xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
     let latLng = head xs 
     let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
-    return $ UpdatedRoom room
+    return $ UpdatedRooms room
 
-processMsg conn (Exit cid rid) = do
-    execute conn "update clients set room_id = null where client_id = ?" [cid]
-    -- TODO fill in number of participants
-    -- DRY up code with common method to get room data?
-    xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
-    let latLng = head xs 
-    let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
-    return $ UpdatedRoom room
+processMsg conn client (ChangeNickname newname) = undefined
 
-processMsg conn (ChangeNickname cid newnick) = undefined
 
-processMsg conn (PostMessage cid msg) = undefined
+processMsg conn client (PostMessage cid msg) = undefined
 
 -- processMsg conn _ = return (ErrorMessage "Unknown Error")
 -- This throws and error:     Warning: Pattern match(es) are overlapped

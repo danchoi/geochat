@@ -23,6 +23,10 @@ data Room = Room { roomId :: Int
 
 instance ToJSON Room
 
+type RoomId = Int
+type ClientId = Int
+type Nickname = Text
+
 data Client = Client { clientId :: Int
                      , nickname :: Text
                      , clientSink :: Maybe (WS.Sink WS.Hybi00)
@@ -31,16 +35,13 @@ data Client = Client { clientId :: Int
 
 instance ToJSON Client
 
-type RoomId = Int
-type ClientId = Int
 
 data MessageFromClient = ListActiveRooms  -- TODO scope by latLng center
-                       | NewClient Text -- a nickname 
+                       | NewClient Nickname -- a nickname 
                        | CreateRoom LatLng
-                       | Enter ClientId RoomId 
-                       | Exit ClientId RoomId 
-                       | ChangeNickname ClientId Text
-                       | PostMessage ClientId Text deriving (Show)
+                       | ChangeNickname Nickname 
+                       | ChangeRoom (Maybe RoomId)
+                       | PostMessage Text deriving (Show)
 
 -- TODO MessageFromServer needs list of Client sinks to broadcast to
 
@@ -49,7 +50,7 @@ data MessageFromServer = ListOfActiveRooms [Room]
                        | NewRoom Room
                        | RoomActivity Room
                        | Broadcast Client Room Text 
-                       | UpdatedRoom Room
+                       | UpdatedRooms [Room]
                        | DeadRoom Room 
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)

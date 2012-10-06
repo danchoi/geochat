@@ -11,12 +11,14 @@ import Control.Monad (MonadPlus, mzero)
 import qualified Data.HashMap.Strict as M
 import Data.Vector (fromList)
 
+
 instance FromJSON MessageFromClient where
   parseJSON (Object v) 
     | Just "NewClient" <- M.lookup "type" v = NewClient <$> v .: "nickname" 
     | Just "CreateRoom" <- M.lookup "type" v = CreateRoom <$> ((,) <$> v .: "lat" <*>  v .: "lng")
-    | Just "Enter" <- M.lookup "type" v = Enter <$> v .: "clientId" <*> v .: "roomId"
-    | Just "Exit" <- M.lookup "type" v = Exit <$> v .: "clientId" <*> v .: "roomId"
+    | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
+    | Just "ChangeRoom" <- M.lookup "type" v = ChangeRoom <$> v .: "roomId" 
+    | Just "PostMessage" <- M.lookup "type" v = PostMessage <$> v .: "content" 
     | otherwise  = mzero
   parseJSON _ = mzero
 
@@ -26,12 +28,9 @@ instance ToJSON MessageFromServer where
   toJSON (NewClientCreated c) = object ["type" .= ("NewClientCreated" :: Text), "client" .= c]
   toJSON (NewRoom room) = object ["type" .= ("NewRoom" :: Text), "room" .= room]
   toJSON (RoomActivity room) = object ["type" .= ("RoomActivity" :: Text), "room" .= room]
-  toJSON (UpdatedRoom room) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room]
+  toJSON (UpdatedRooms rooms) = object ["type" .= ("UpdatedRooms" :: Text), "rooms" .= rooms]
   toJSON (DeadRoom room) = object ["type" .= ("DeadRoom" :: Text), "room" .= room]
   toJSON (Broadcast client room text) = object ["type" .= ("BroadCast" :: Text), "client" .= client, "room" .= room, "text" .= text]
-
-
-
 
 
 {- 
