@@ -38,7 +38,7 @@ establishClient sink = flip WS.catchWsError catchDisconnect $ do
     case maybeClientMessage of
         Just (NewClient newNick) -> do 
             client <- liftIO $ createClient db newNick
-            processMessageFromClient client sink
+            procClientMsg client sink
         -- TODO: paint map
         Just _ -> do 
             liftIO $ TL.putStrLn $ "Message not allowed yet: " `mappend`  (E.decodeUtf8 rawMsg)
@@ -55,8 +55,8 @@ establishClient sink = flip WS.catchWsError catchDisconnect $ do
             return ()
         _ -> return ()
 
-processMessageFromClient :: WS.Protocol p => Client -> WS.Sink a -> WS.WebSockets p ()
-processMessageFromClient client sink = flip WS.catchWsError catchDisconnect $ do
+procClientMsg :: WS.Protocol p => Client -> WS.Sink a -> WS.WebSockets p ()
+procClientMsg client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
     let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
     db <- liftIO GeoChat.EventProcessor.dbconn
@@ -70,7 +70,7 @@ processMessageFromClient client sink = flip WS.catchWsError catchDisconnect $ do
             let errMsg = (E.decodeUtf8 rawMsg)
             liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
             return () 
-    processMessageFromClient client sink
+    procClientMsg client sink
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ do
