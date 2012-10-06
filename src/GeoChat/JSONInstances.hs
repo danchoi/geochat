@@ -24,13 +24,10 @@ instance FromJSON MessageFromClient where
 
 
 instance ToJSON MessageFromServer where
-  toJSON (ListOfActiveRooms rooms) = object ["type" .= ("ListOfActiveRooms" :: Text), "rooms" .= (fromList rooms)]
-  toJSON (NewClientCreated c) = object ["type" .= ("NewClientCreated" :: Text), "client" .= c]
-  toJSON (NewRoom room) = object ["type" .= ("NewRoom" :: Text), "room" .= room]
-  toJSON (RoomActivity room) = object ["type" .= ("RoomActivity" :: Text), "room" .= room]
-  toJSON (UpdatedRooms rooms) = object ["type" .= ("UpdatedRooms" :: Text), "rooms" .= rooms]
-  toJSON (DeadRoom room) = object ["type" .= ("DeadRoom" :: Text), "room" .= room]
-  toJSON (Broadcast client room text) = object ["type" .= ("BroadCast" :: Text), "client" .= client, "room" .= room, "text" .= text]
+  toJSON (UpdatedUser u) = object ["type" .= ("UpdatedUser" :: Text), "user" .= u]
+  toJSON (UpdatedRoom room) = object ["type" .= ("UpdatedRooms" :: Text), "rooms" .= room]
+  toJSON (Broadcast user room text) = object ["type" .= ("BroadCast" :: Text), "user" .= user, "room" .= room, "text" .= text]
+  toJSON (ErrorMessage text) = object ["type" .= ("ErrorMessage" :: Text), "content" .= text]
 
 
 {- 
