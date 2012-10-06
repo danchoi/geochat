@@ -73,6 +73,7 @@ processMessageFromClient client sink = flip WS.catchWsError catchDisconnect $ do
         Just WS.ConnectionClosed -> liftIO $ do
             putStrLn "CONN CLOSED"
             -- broadcast ((nickname client) `mappend` " disconnected") s'
+            -- TODO REMOVE CLIENT FROM ALL ROOMS, UPDATE EXITED TIMESTAMP
             return ()
         _ -> return ()
 
