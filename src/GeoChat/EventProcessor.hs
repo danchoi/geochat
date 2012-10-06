@@ -20,13 +20,14 @@ connectInfo = defaultConnectInfo { connectDatabase = "geochat"
 dbconn :: IO Connection
 dbconn = connect connectInfo
 
+{-
 clientExists :: Connection -> Text -> IO Bool
 clientExists conn nickname = do
     xs <- query conn "select client_id, nickname from clients where nickname = ?" [nickname]
     forM_ xs $ \(cid, cnickname) -> 
         putStrLn $ show (cid :: Int) ++ " " ++  cnickname 
     return (length xs == 1)
-
+-}
 
 processMsg :: Connection -> MessageFromClient -> IO MessageFromServer
 
@@ -65,7 +66,7 @@ processMsg conn (Exit cid rid) = do
     let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
     return $ UpdatedRoom room
 
-processMsg conn (ChangeNickname newnick) = undefined
+processMsg conn (ChangeNickname cid newnick) = undefined
 
 processMsg conn (PostMessage cid msg) = undefined
 

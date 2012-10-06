@@ -4,11 +4,7 @@
 module GeoChat.Types where
 
 import Data.Text (Text)
-import Data.Vector (fromList)
 import qualified Network.WebSockets as WS
-import Control.Applicative
-import Control.Monad (MonadPlus, mzero)
-import qualified Data.HashMap.Strict as M
 import GHC.Generics (Generic)
 import Data.Aeson 
 
@@ -39,7 +35,7 @@ type RoomId = Int
 type ClientId = Int
 
 data MessageFromClient = ListActiveRooms  -- TODO scope by latLng center
-                       | NewClient Text   -- a nickname 
+                       | NewClient Text -- a nickname 
                        | CreateRoom LatLng
                        | Enter ClientId RoomId 
                        | Exit ClientId RoomId 

@@ -13,6 +13,9 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
 import GeoChat.Types
+import GeoChat.JSONInstances
+import GeoChat.EventProcessor
+import Data.Aeson 
 
 data ServerState = ServerState { clients :: [Client] }
 
@@ -30,14 +33,17 @@ addClient client s = s { clients = client:(clients s) }
 
 removeClient :: Client -> ServerState -> ServerState
 removeClient client s = 
-  s { clients = clients' }
-    where clients' = filter ((/= (nickname client)) . nickname) $ (clients s)
+  s { clients = clients' } 
+  where clients' = filter ((/= (nickname client)) . nickname) $ (clients s)
 
 broadcast :: Text -> ServerState -> IO ()
 -- TODO make a new function to broadcast to rooms only
 broadcast message state = do
     T.putStrLn message
-    forM_ (clients state) $ \client -> WS.sendSink (clientSink client) $ WS.textData message
+    forM_ (map clientSink $ clients state) sendMsg
+    where 
+      sendMsg (Just sink) = WS.sendSink sink $ WS.textData message
+      sendMsg _ = return ()
 
 main :: IO ()
 main = do
@@ -49,44 +55,21 @@ application state rq = do
     WS.acceptRequest rq
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
     sink <- WS.getSink
-    msg <- WS.receiveData
     s <- liftIO $ readMVar state
-    case msg of
-        _   | not (prefix `T.isPrefixOf` msg) ->
-                WS.sendTextData ("Wrong announcement" :: Text)
-            | any ($ nickname client)
-                [T.null, T.any isPunctuation, T.any isSpace] ->
-                    WS.sendTextData ("Name cannot " `mappend`
-                        "contain punctuation or whitespace, and " `mappend`
-                        "cannot be empty" :: Text)
-            | clientExists client s ->
-                WS.sendTextData ("User already exists" :: Text)
-            | otherwise -> do
-               liftIO $ modifyMVar_ state $ \st -> do
-                   let st' = addClient client st
-                   WS.sendSink sink $ WS.textData $
-                       "Welcome! Users: " `mappend`
-                       T.intercalate ", " (map nickname (clients st))
-                   broadcast (nickname client `mappend` " joined") st'
-                   return st'
-               talk state client
-          where
-            prefix = "Hi! I am "
-            client = Client { clientId = Nothing
-                            , nickname = (T.drop (T.length prefix) msg)
-                            , clientSink = sink
-                            , clientRoom = Nothing }
+    processIncomingJSON state sink
 
-talk :: WS.Protocol p => MVar ServerState -> Client -> WS.WebSockets p ()
-talk state client = flip WS.catchWsError catchDisconnect $ do
-    msg <- WS.receiveData
-    liftIO $ readMVar state >>= broadcast
-        ((nickname client)  `mappend` ": " `mappend` msg)
-    talk state client
+processIncomingJSON :: WS.Protocol p => MVar ServerState -> WS.Sink a -> WS.WebSockets p ()
+processIncomingJSON state sink = flip WS.catchWsError catchDisconnect $ do
+    msg <- WS.receiveData 
+    let typedMessage = decode msg :: Maybe MessageFromClient
+    db <- liftIO GeoChat.EventProcessor.dbconn
+    processIncomingJSON state sink
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ \s -> do
-            let s' = removeClient client s
-            broadcast ((nickname client) `mappend` " disconnected") s'
-            return s'
+
+            -- let s' = removeClient client s
+            -- broadcast ((nickname client) `mappend` " disconnected") s'
+
+            return s
         _ -> return ()

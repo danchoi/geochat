@@ -1,5 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module GeoChat.JSONInstances where
+import GeoChat.Types
+import GHC.Generics (Generic)
+import Data.Aeson 
+import Data.Text (Text)
+import Control.Applicative
+import Control.Monad (MonadPlus, mzero)
+import qualified Data.HashMap.Strict as M
+import Data.Vector (fromList)
 
 instance FromJSON MessageFromClient where
   parseJSON (Object v) 

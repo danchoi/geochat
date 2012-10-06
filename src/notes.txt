@@ -12,3 +12,6 @@ stuff in the chat room depending on the UI state.
 
 
 
+websockets-snap package is probably what you're looking for
+
+http://hackage.haskell.org/package/websockets-snap
