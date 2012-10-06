@@ -40,7 +40,10 @@ establishClient sink = flip WS.catchWsError catchDisconnect $ do
             client <- liftIO $ createClient db newNick
             processMessageFromClient client sink
         -- TODO: paint map
-        _ -> do 
+        Just _ -> do 
+            liftIO $ TL.putStrLn $ "Message not allowed yet: " `mappend`  (E.decodeUtf8 rawMsg)
+            establishClient sink
+        Nothing -> do 
             let errMsg = (E.decodeUtf8 rawMsg)
             liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
             establishClient sink
