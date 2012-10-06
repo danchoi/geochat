@@ -68,7 +68,7 @@ processIncomingJSON state sink = flip WS.catchWsError catchDisconnect $ do
             -- TODO use return val from this to send JSON back
             -- processMsg db clientMessage
             return ()
-        _ -> return ()
+        _ -> return ()  -- TODO send back JSON error message
     processIncomingJSON state sink
       
   where
