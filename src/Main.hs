@@ -41,6 +41,7 @@ establishClient conn sink = flip WS.catchWsError catchDisconnect $ do
     case maybeClientMessage of
         Just (NewClient newNick) -> do 
             client <- liftIO $ createClient conn newNick
+            liftIO $ putStrLn $ "Created client " `mappend` (show $ clientId client) 
             procClientMsg conn client sink
         -- TODO: paint map
         Just _ -> do 

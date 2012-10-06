@@ -41,7 +41,6 @@ processMsg conn _ ListActiveRooms = do
   let r = map (\(a, b, c, d) -> UpdatedRoom $ Room { roomId = a, latLng = (b, c), numParticipants = d }) xs
   return r
 
-
 processMsg conn (Just client) (ChangeNickname newname) = undefined
 
 processMsg conn (Just client) (CreateRoom (lat, lng)) = do
