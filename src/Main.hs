@@ -42,10 +42,11 @@ broadcast :: Text -> ServerState -> IO ()
 -- TODO make a new function to broadcast to rooms only
 broadcast message state = do
     T.putStrLn message
-    forM_ (map clientSink $ clients state) sendMsg
+    mapM_ sendMsg clientSinks 
     where 
       sendMsg (Just sink) = WS.sendSink sink $ WS.textData message
       sendMsg _ = return ()
+      clientSinks = map clientSink $ clients state
 
 main :: IO ()
 main = do
