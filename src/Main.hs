@@ -28,10 +28,10 @@ application rq = do
     WS.acceptRequest rq
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
     sink <- WS.getSink
-    processIncomingJSON sink
+    establishClient sink
 
-processIncomingJSON :: WS.Protocol p => WS.Sink a -> WS.WebSockets p ()
-processIncomingJSON sink = flip WS.catchWsError catchDisconnect $ do
+establishClient :: WS.Protocol p => WS.Sink a -> WS.WebSockets p ()
+establishClient sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
     let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
     db <- liftIO GeoChat.EventProcessor.dbconn
@@ -40,10 +40,10 @@ processIncomingJSON sink = flip WS.catchWsError catchDisconnect $ do
             client <- liftIO $ createClient db newNick
             processMessageFromClient client sink
         -- TODO: paint map
-        Nothing -> do 
+        _ -> do 
             let errMsg = (E.decodeUtf8 rawMsg)
             liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
-            processIncomingJSON sink
+            establishClient sink
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ do
