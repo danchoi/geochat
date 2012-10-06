@@ -69,7 +69,8 @@ processIncomingJSON state sink = flip WS.catchWsError catchDisconnect $ do
         Just clientMessage -> do 
             db <- liftIO GeoChat.EventProcessor.dbconn
             liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
-            liftIO $ processMsg db clientMessage
+            messageFromServer <- liftIO $ processMsg db clientMessage
+            -- TODO broadcast this
             return ()
 
         _ -> do 
