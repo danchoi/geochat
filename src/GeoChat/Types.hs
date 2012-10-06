@@ -38,12 +38,12 @@ instance ToJSON Client
 type RoomId = Int
 type ClientId = Int
 
-data MessageFromClient = ListActiveRooms   -- TODO scope by latLng center
-                       | NewClient Text -- nickname 
+data MessageFromClient = ListActiveRooms  -- TODO scope by latLng center
+                       | NewClient Text   -- a nickname 
                        | CreateRoom LatLng
                        | Enter ClientId RoomId 
                        | Exit ClientId RoomId 
-                       | ChangeNickname Text
+                       | ChangeNickname ClientId Text
                        | PostMessage ClientId Text deriving (Show)
 
 -- TODO MessageFromServer needs list of Client sinks to broadcast to
@@ -52,7 +52,7 @@ data MessageFromServer = ListOfActiveRooms [Room]
                        | NewClientCreated Client
                        | NewRoom Room
                        | RoomActivity Room
-                       | Broadcast Client Room Text -- need to add author or make ChatMessage type
+                       | Broadcast Client Room Text 
                        | UpdatedRoom Room
                        | DeadRoom Room 
                        | ErrorMessage { errMessage :: String } 

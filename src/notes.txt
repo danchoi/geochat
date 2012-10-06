@@ -1,0 +1,14 @@
+
+
+ClientId should be opaque to the end user. This is mapped to a sink in
+the websocket server.
+
+Broadcast all MessageFromServer to all clients, and let client code code
+stuff in the chat room depending on the UI state.
+
+  Outgoing bandwidth may be bigger this way, but processing (selecting
+  which clients to send messages to) is simpler.
+
+
+
+
