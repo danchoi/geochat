@@ -55,3 +55,23 @@ data MessageFromServer = ListOfActiveRooms [Room]
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 
+{-
+
+What if instead of list of active rooms and updates, we bundled updated clients and rooms into same
+payload
+
+replace
+  ListOfActiveRooms 
+  UpdatedRooms
+  NewClientCreated
+  NewRoom
+  DeadRoom
+
+with 
+ Updates [Room] [Client]
+
+
+-}
+
+
+

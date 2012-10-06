@@ -46,6 +46,10 @@ processMsg conn client (CreateRoom (lat, lng)) = do
 
 -- TODO will need to send back list of possibly pair of updated rooms
 
+processMsg conn client (ChangeRoom Nothing) = do
+    execute conn "update clients set room_id = null where client_id = ?" [(clientId client)]
+    -- INCOMPLETE
+
 processMsg conn client (ChangeRoom (Just rid)) = do
     execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
 
@@ -57,7 +61,13 @@ processMsg conn client (ChangeRoom (Just rid)) = do
 processMsg conn client (ChangeNickname newname) = undefined
 
 
-processMsg conn client (PostMessage cid msg) = undefined
+processMsg conn client (PostMessage msg) = undefined
+
+
+-- map updateRoom to produce a list of these and then wrap in UpdatedRooms
+updateRoom :: RoomId -> Room
+updateRoom rid = undefined
+
 
 -- processMsg conn _ = return (ErrorMessage "Unknown Error")
 -- This throws and error:     Warning: Pattern match(es) are overlapped
