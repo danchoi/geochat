@@ -35,7 +35,12 @@ createClient conn newNick = do
 
 processMsg :: Connection -> Maybe Client -> MessageFromClient -> IO [MessageFromServer]
 
-processMsg conn _ ListActiveRooms = undefined
+processMsg conn _ ListActiveRooms = do
+  let q = "select room_id, lat, lng, count(*) from rooms inner join clients using(room_id) group by room_id" 
+  xs <- query_ conn q
+  let r = map (\(a, b, c, d) -> UpdatedRoom $ Room { roomId = a, latLng = (b, c), numParticipants = d }) xs
+  return r
+
 
 processMsg conn (Just client) (ChangeNickname newname) = undefined
 

@@ -30,6 +30,8 @@ application rq = do
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
     sink <- WS.getSink
     conn <- liftIO GeoChat.EventProcessor.dbconn
+    rooms <- liftIO $ processMsg conn Nothing ListActiveRooms 
+    WS.sendTextData $ encode rooms 
     establishClient conn sink
 
 establishClient :: WS.Protocol p => Connection -> WS.Sink a -> WS.WebSockets p ()

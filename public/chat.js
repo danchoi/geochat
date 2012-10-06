@@ -115,11 +115,12 @@ $(document).ready(function() {
   geoGossip.map.createMap();
   geoGossip.ws = new WebSocket(webSocketURL); 
   geoGossip.ws.onopen = function(event){
-    $('#chatStream').append('<br>Connected to the server');
-    var msg = {clientEvent: 'sesssionStarted'};
+    console.log("Connected to server");
   };
 
   geoGossip.ws.onmessage = function(event){
+    console.log("on message event: " + event.data);
+
     if (event.data.length > 0) {
       var x = JSON.parse(event.data);
       var serverEvent = geoGossip.serverEvents[x.serverEvent];
