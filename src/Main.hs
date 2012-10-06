@@ -60,10 +60,17 @@ application state rq = do
 
 processIncomingJSON :: WS.Protocol p => MVar ServerState -> WS.Sink a -> WS.WebSockets p ()
 processIncomingJSON state sink = flip WS.catchWsError catchDisconnect $ do
-    msg <- WS.receiveData 
-    let typedMessage = decode msg :: Maybe MessageFromClient
-    db <- liftIO GeoChat.EventProcessor.dbconn
+    rawMsg <- WS.receiveData 
+    let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
+    case maybeClientMessage of
+        Just clientMessage -> do 
+            db <- liftIO GeoChat.EventProcessor.dbconn
+            -- TODO use return val from this to send JSON back
+            -- processMsg db clientMessage
+            return ()
+        _ -> return ()
     processIncomingJSON state sink
+      
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ \s -> do
