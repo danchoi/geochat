@@ -18,6 +18,7 @@ import GeoChat.JSONInstances
 import GeoChat.EventProcessor
 import Data.Aeson 
 import Data.Text.Lazy.Encoding as E
+import Database.PostgreSQL.Simple (Connection)
 
 main :: IO ()
 main = do
@@ -38,7 +39,7 @@ establishClient sink = flip WS.catchWsError catchDisconnect $ do
     case maybeClientMessage of
         Just (NewClient newNick) -> do 
             client <- liftIO $ createClient db newNick
-            procClientMsg client sink
+            procClientMsg db client sink
         -- TODO: paint map
         Just _ -> do 
             liftIO $ TL.putStrLn $ "Message not allowed yet: " `mappend`  (E.decodeUtf8 rawMsg)
@@ -55,22 +56,21 @@ establishClient sink = flip WS.catchWsError catchDisconnect $ do
             return ()
         _ -> return ()
 
-procClientMsg :: WS.Protocol p => Client -> WS.Sink a -> WS.WebSockets p ()
-procClientMsg client sink = flip WS.catchWsError catchDisconnect $ do
+procClientMsg :: WS.Protocol p => Connection -> Client -> WS.Sink a -> WS.WebSockets p ()
+procClientMsg conn client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
     let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
-    db <- liftIO GeoChat.EventProcessor.dbconn
     case maybeClientMessage of
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
-            msgsFromServer <- liftIO $ processMsg db (Just client) clientMessage
+            msgsFromServer <- liftIO $ processMsg conn (Just client) clientMessage
             -- TODO broadcast this
             return ()
         Nothing -> do 
             let errMsg = (E.decodeUtf8 rawMsg)
             liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
             return () 
-    procClientMsg client sink
+    procClientMsg conn client sink
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ do
