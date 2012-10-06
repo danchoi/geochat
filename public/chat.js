@@ -173,7 +173,8 @@ $(document).ready(function() {
   $("form#nick_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#nickname");
-    geoGossip.ws.send("/nick " + textfield.val());
+    var msg = {type: "NewClient", nickname: textfield.val()};
+    geoGossip.ws.send(JSON.stringify(msg));
   });
 
   $("#create_stream").click(function(e) {
