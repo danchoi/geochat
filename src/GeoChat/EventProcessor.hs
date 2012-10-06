@@ -28,13 +28,9 @@ clientExists conn nickname = do
     return (length xs == 1)
 
 
--- We need database IO so this is in the IO Monad
-
 processMsg :: Connection -> MessageFromClient -> IO MessageFromServer
 
 processMsg conn ListActiveRooms = undefined
-
--- e.g. processMsg c (NewClient $ Text.pack "dan2")
 
 processMsg conn (NewClient newNick) = do
     let q = "insert into clients (nickname) values (?) returning client_id, nickname"
@@ -77,4 +73,10 @@ processMsg conn (PostMessage cid msg) = undefined
 -- This throws and error:     Warning: Pattern match(es) are overlapped
 --
 
+{-
+ 
+e.g. processMsg c (NewClient $ Text.pack "dan2")
 
+-}
+
+ 
