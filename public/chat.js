@@ -111,7 +111,7 @@ function getURLParameter(name) {
 }
 
 $(document).ready(function() {
-  var webSocketURL = getURLParameter('dev') ? 'ws://localhost:9394' : 'ws://poddb.com:9394';
+  var webSocketURL = 'ws://localhost:9160'; // : 'ws://poddb.com:9394';
   geoGossip.map.createMap();
   geoGossip.ws = new WebSocket(webSocketURL); 
   geoGossip.ws.onopen = function(event){

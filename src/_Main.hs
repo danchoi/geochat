@@ -10,7 +10,7 @@ import Control.Monad (forM_)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
+import qualified Data.Text.IO as TIO
 import qualified Network.WebSockets as WS
 import GeoChat.Types
 
@@ -36,7 +36,7 @@ removeClient client s =
 broadcast :: Text -> ServerState -> IO ()
 -- TODO make a new function to broadcast to rooms only
 broadcast message state = do
-    T.putStrLn message
+    TIO.putStrLn message
     forM_ (clients state) $ \client -> WS.sendSink (clientSink client) $ WS.textData message
 
 main :: IO ()

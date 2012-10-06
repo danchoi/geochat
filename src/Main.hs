@@ -11,11 +11,13 @@ import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import qualified Data.Text.Lazy.IO as TL
 import qualified Network.WebSockets as WS
 import GeoChat.Types
 import GeoChat.JSONInstances
 import GeoChat.EventProcessor
 import Data.Aeson 
+import Data.Text.Lazy.Encoding as E
 
 data ServerState = ServerState { clients :: [Client] }
 
@@ -68,12 +70,16 @@ processIncomingJSON state sink = flip WS.catchWsError catchDisconnect $ do
             -- TODO use return val from this to send JSON back
             -- processMsg db clientMessage
             return ()
-        _ -> return ()  -- TODO send back JSON error message
+        _ -> do 
+              let errMsg = (E.decodeUtf8 rawMsg)
+              liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
+              return () 
     processIncomingJSON state sink
       
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ \s -> do
+            putStrLn "CONN CLOSED"
 
             -- let s' = removeClient client s
             -- broadcast ((nickname client) `mappend` " disconnected") s'
