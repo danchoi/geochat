@@ -37,8 +37,8 @@ data User = User { userClientId :: Int, userNickname :: Text } deriving (Generic
 
 instance ToJSON User
 
-data MessageFromClient = ListActiveRooms  -- TODO scope by latLng center
-                       | NewClient Nickname -- a nickname 
+data MessageFromClient = ListActiveRooms
+                       | LocationUpdated LatLng
                        | CreateRoom LatLng
                        | ChangeNickname Nickname 
                        | ChangeRoom (Maybe RoomId)

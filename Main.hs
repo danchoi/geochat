@@ -52,18 +52,18 @@ application state rq = do
         WS.sendSink sink $ WS.textData $ "Welcome client " `mappend` (T.pack . show $ clientId client)
         --- broadcast a joined message
         return s'
-    rooms <- liftIO $ processMsg conn Nothing ListActiveRooms 
+    rooms <- liftIO $ processMsg conn client ListActiveRooms 
     WS.sendTextData $ encode rooms 
     receiveMessage state conn client sink
 
 receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink a -> WS.WebSockets p ()
 receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
-    let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
-    case maybeClientMessage of
+    
+    case (decode rawMsg :: Maybe MessageFromClient) of
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
-            msgsFromServer <- liftIO $ processMsg conn (Just client) clientMessage
+            msgsFromServer <- liftIO $ processMsg conn client clientMessage
             -- TODO broadcast this
             return ()
         Nothing -> do 

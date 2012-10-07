@@ -15,15 +15,13 @@ connectInfo = defaultConnectInfo { connectDatabase = "geochat"
 dbconn :: IO Connection
 dbconn = connect connectInfo
 
-
 createClient :: Connection -> IO Client
 createClient conn = do
     let q = "insert into clients (nickname) values ('anon') returning client_id, nickname"
     xs@(x:_) :: [(Int, Text)] <- query_ conn q 
     return (Client {clientId = (fst x) }) 
 
-
-processMsg :: Connection -> Maybe Client -> MessageFromClient -> IO [MessageFromServer]
+processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
 processMsg conn _ ListActiveRooms = do
   let q = "select room_id, lat, lng, count(*) from rooms inner join clients using(room_id) group by room_id" 
@@ -31,9 +29,9 @@ processMsg conn _ ListActiveRooms = do
   let r = map (\(a, b, c, d) -> UpdatedRoom $ Room { roomId = a, latLng = (b, c), numParticipants = d }) xs
   return r
 
-processMsg conn (Just client) (ChangeNickname newname) = undefined
+processMsg conn client (ChangeNickname newname) = undefined
 
-processMsg conn (Just client) (CreateRoom (lat, lng)) = do
+processMsg conn client (CreateRoom (lat, lng)) = do
   let cid = clientId client
       q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
   xs :: [Only Int] <- query conn q (lat, lng)
@@ -41,7 +39,7 @@ processMsg conn (Just client) (CreateRoom (lat, lng)) = do
   return [r]
 
 {-
-processMsg conn (Just client) (ChangeRoom maybeRoomId) = do
+processMsg conn client (ChangeRoom maybeRoomId) = do
   execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
   xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
   let latLng = head xs 
