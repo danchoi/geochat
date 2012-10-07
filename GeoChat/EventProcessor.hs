@@ -32,12 +32,11 @@ refreshClient conn client = do
     let latLng = case (mlat,mlng) of 
                    (Just lat, Just lng) -> Just (lat, lng)
                    otherwise -> Nothing
-                  
     return (client {clientLatLng = latLng, clientRoomId = mrid})
 
 findRoom :: Connection -> RoomId -> IO Room
 findRoom conn rid = do
-    let q = "select lat, lng, count(*) from clients where room_id = ?"
+    let q = "select max(rooms.lat), max(rooms.lng), count(clients.client_id) from rooms left outer join clients using (room_id) where room_id = ?"
     ((lat, lng, count):_) :: [(Double, Double, Int)] <- query conn q (Only rid)
     return (Room {roomId = rid, latLng = (lat, lng), numParticipants = count})
 
@@ -47,9 +46,9 @@ refreshRoom conn room = findRoom conn (roomId room)
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
 processMsg conn _ ListActiveRooms = do
-  let q = "select room_id, rooms.lat, rooms.lng, count(*) from rooms inner join clients using(room_id) group by room_id" 
+  let q = "select room_id, max(rooms.lat), max(rooms.lng), count(*) from rooms inner join clients using(room_id) group by room_id" 
   xs <- query_ conn q
-  let r = map (\(a, b, c, d) -> UpdatedRoom $ Room { roomId = a, latLng = (b, c), numParticipants = d }) xs
+  let r = map (\(a, b, c, d) -> UpdatedRoom (Room { roomId = a, latLng = (b, c), numParticipants = d }) "initialize" ) xs 
   return r
 
 processMsg conn client (LocationUpdated (lat, lng)) = do
@@ -71,28 +70,28 @@ processMsg conn client (CreateRoom (lat, lng)) = do
 
 processMsg conn client (JoinRoom rid) = do
   client' <- refreshClient conn client
-  let r = clientRoomId client
+  let r = clientRoomId client'
   case r of 
     Just x -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
         c <- liftM UpdatedClient $ refreshClient conn client
-        r1 <- liftM UpdatedRoom $ findRoom conn rid
-        r2 <- liftM UpdatedRoom $ findRoom conn x
-        return [c, r1, r2]
+        rjoined <- liftM UpdatedRoom $ findRoom conn rid
+        rleft <- liftM UpdatedRoom $ findRoom conn x 
+        return [c, rjoined $  "joined" , rleft "left"]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
         c<- liftM UpdatedClient $ refreshClient conn client
         r <- liftM UpdatedRoom $ findRoom conn rid
-        return [c, r]
+        return [c, r "joined "]
 
 processMsg conn client Leave = do
   client' <- refreshClient conn client
-  let r = clientRoomId client
+  let r = clientRoomId client'
   case r of 
     Just x -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client)
       r <- liftM UpdatedRoom $ findRoom conn x
-      return $ [r]
+      return $ [r "joined"]
     Nothing -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client)
       return $ []

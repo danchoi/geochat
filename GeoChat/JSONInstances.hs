@@ -18,7 +18,6 @@ instance FromJSON MessageFromClient where
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
     | Just "CreateRoom" <- M.lookup "type" v = CreateRoom <$> ((,) <$> v .: "lat" <*>  v .: "lng")
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
-    | Just "LeaveRoom" <- M.lookup "type" v = LeaveRoom <$> v .: "roomId" 
     | Just "JoinRoom" <- M.lookup "type" v = JoinRoom <$> v .: "roomId" 
     | Just "PostMessage" <- M.lookup "type" v = PostMessage <$> v .: "content" 
     | otherwise  = mzero
@@ -27,7 +26,7 @@ instance FromJSON MessageFromClient where
 
 instance ToJSON MessageFromServer where
   toJSON (UpdatedClient c) = object ["type" .= ("UpdatedClient" :: Text), "client" .= c]
-  toJSON (UpdatedRoom room) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room]
+  toJSON (UpdatedRoom room msg) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room, "message" .= msg]
   toJSON (Broadcast user room text) = object ["type" .= ("BroadCast" :: Text), "user" .= user, "room" .= room, "text" .= text]
   toJSON (ErrorMessage text) = object ["type" .= ("ErrorMessage" :: Text), "content" .= text]
 

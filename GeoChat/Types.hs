@@ -41,12 +41,11 @@ data MessageFromClient = ListActiveRooms
                        | CreateRoom LatLng
                        | ChangeNickname Nickname 
                        | JoinRoom RoomId
-                       | LeaveRoom RoomId
                        | PostMessage Text 
                        | Leave deriving (Show)
 
 data MessageFromServer = UpdatedClient Client
-                       | UpdatedRoom Room
+                       | UpdatedRoom Room Text
                        | Broadcast Client Room Text 
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
