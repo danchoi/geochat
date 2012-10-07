@@ -24,10 +24,15 @@ createClient conn = do
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
 processMsg conn _ ListActiveRooms = do
-  let q = "select room_id, lat, lng, count(*) from rooms inner join clients using(room_id) group by room_id" 
+  let q = "select room_id, rooms.lat, rooms.lng, count(*) from rooms inner join clients using(room_id) group by room_id" 
   xs <- query_ conn q
   let r = map (\(a, b, c, d) -> UpdatedRoom $ Room { roomId = a, latLng = (b, c), numParticipants = d }) xs
   return r
+
+processMsg conn client (LocationUpdated (lat, lng)) = do
+  let q = "update clients set lat = ?, lng = ? where client_id = ?" 
+  execute conn q (lat, lng, clientId client)
+  return []
 
 processMsg conn client (ChangeNickname newname) = undefined
 

@@ -2,9 +2,12 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 var map;
 
-var geoGossip = {
+var geogossip = {
   ws: null,
   currentLocation: null,
+  tellServer: function (data) {
+    geogossip.ws.send(JSON.stringify(data));
+  },
   rooms: {
     selected: null
   },
@@ -20,10 +23,10 @@ var geoGossip = {
     this.mouseoutOpts = function() { return (this.selected ? this.selectedOptions : this.baseOptions); };
     this.flashOpts = function() { return (this.chatActivityOptions); };
     this.select = function() {
-      if (geoGossip.rooms.selected) 
-        geoGossip.rooms.selected.unselect();
+      if (geogossip.rooms.selected) 
+        geogossip.rooms.selected.unselect();
       this.selected = true;
-      geoGossip.rooms.selected = this;
+      geogossip.rooms.selected = this;
     },
     this.unselect = function() {
       this.selected = false;
@@ -44,7 +47,7 @@ var geoGossip = {
       return function() {
         console.log("Room clicked: "+ x.info.roomId); 
         x.select();
-        // geoGossip.ws.send( )
+        // geogossip.ws.send( )
         // /enter "+roomInfo.room_id );
       };
     }(this));
@@ -61,13 +64,12 @@ var geoGossip = {
       $("#create_chat").hide();
       map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
       google.maps.event.addListener(map, 'click', function(event) { 
-        var msg = {clientEvent: 'roomCreated', lat: event.latLng.lat(), lng: event.latLng.lng()}
-        geoGossip.ws.send(JSON.stringify(msg));
+        geogossip.tellServer( {type: 'CreateRoom', lat: event.latLng.lat(), lng: event.latLng.lng()} );
       });
       if(navigator.geolocation) {
-        // var browserSupportFlag = true;
         navigator.geolocation.getCurrentPosition(function(pos) {
-          geoGossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+          geogossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+          geogossip.tellServer({type: 'LocationUpdated', lat: pos.coords.latitude, lng: pos.coords.longitude}); 
           $("#create_chat").show();
         }, function() { /* No geolocation */ });
       }
@@ -77,14 +79,13 @@ var geoGossip = {
     roomCreated: function(roomInfo) {
       console.log("creating room: "+ JSON.stringify(roomInfo));
       var center = new google.maps.LatLng(roomInfo.lat, roomInfo.lng);
-      var circle = new google.maps.Circle(geoGossip.map.circle.drawOptions(center));
-      var room = new geoGossip.Room(circle, roomInfo);
-      geoGossip.rooms[roomInfo.roomId] = room;
+      var circle = new google.maps.Circle(geogossip.map.circle.drawOptions(center));
+      var room = new geogossip.Room(circle, roomInfo);
+      geogossip.rooms[roomInfo.roomId] = room;
     },
     roomsList: function(rooms) {
       drawRooms(rooms);
     }
-
   }
 };
 
@@ -112,20 +113,21 @@ function getURLParameter(name) {
 
 $(document).ready(function() {
   var webSocketURL = 'ws://localhost:9160'; // : 'ws://poddb.com:9394';
-  geoGossip.map.createMap();
-  geoGossip.ws = new WebSocket(webSocketURL); 
-  geoGossip.ws.onopen = function(event){
+  geogossip.map.createMap();
+  geogossip.ws = new WebSocket(webSocketURL); 
+  geogossip.ws.onopen = function(event){
     console.log("Connected to server");
   };
 
-  geoGossip.ws.onmessage = function(event){
+  geogossip.ws.onmessage = function(event){
     console.log("on message event: " + event.data);
 
     if (event.data.length > 0) {
+      console.log("data from server: " + event.data);
       var x = JSON.parse(event.data);
-      var serverEvent = geoGossip.serverEvents[x.serverEvent];
+      var serverEvent = geogossip.serverEvents[x.serverEvent];
       if (typeof serverEvent == 'function') {
-        // dynamically dispatch to one of the geoGossip.serverEvents
+        // dynamically dispatch to one of the geogossip.serverEvents
         serverEvent(x);
       }
       return;
@@ -148,15 +150,15 @@ $(document).ready(function() {
           // TODO CHANGE
           x = roomCircles[liveRoomId];
           console.log(x);
-          x.setOptions(geoGossip.map.circle.chatActivityOptions);
-          setTimeout( function() { x.setOptions(geoGossip.map.circle.baseOptions); }, 100); 
+          x.setOptions(geogossip.map.circle.chatActivityOptions);
+          setTimeout( function() { x.setOptions(geogossip.map.circle.baseOptions); }, 100); 
         }
         $('#chatStream').animate({scrollTop: $('#chatStream').height()});
      }
     }
   };
   
-  geoGossip.ws.onclose = function(event){
+  geogossip.ws.onclose = function(event){
     $("#chatStream").append('<br>Connection closed');
   };
  
@@ -167,7 +169,7 @@ $(document).ready(function() {
   $("form#chat_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#message");
-    geoGossip.ws.send(textfield.val());
+    geogossip.ws.send(textfield.val());
     textfield.val("");
   });
 
@@ -175,14 +177,14 @@ $(document).ready(function() {
     e.preventDefault();
     var textfield = $("#nickname");
     var msg = {type: "NewClient", nickname: textfield.val()};
-    geoGossip.ws.send(JSON.stringify(msg));
+    geogossip.ws.send(JSON.stringify(msg));
   });
 
   $("#create_stream").click(function(e) {
-    if (geoGossip.currentLocation) {
-      var msg = "/create_room  new_room "+geoGossip.currentLocation.lat()+" "+geoGossip.currentLocation.lng();
+    if (geogossip.currentLocation) {
+      var msg = "/create_room  new_room "+geogossip.currentLocation.lat()+" "+geoGossip.currentLocation.lng();
       console.log(msg);
-      geoGossip.ws.send(msg);
+      geogossip.ws.send(msg);
     }
   });
 
