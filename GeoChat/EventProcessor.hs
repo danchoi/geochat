@@ -91,15 +91,8 @@ processMsg conn client Leave = do
   case r of 
     Just x -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
-      room <- findRoom conn x
-      let r = UpdatedRoom room
-      case (numParticipants room) of
-        0 -> do 
-          -- this could be a postgresql trigger
-          execute conn "update rooms set died = now() where room_id = ?" (Only x)
-          return [r "died"]
-        otherwise -> do 
-          return $ [r $ roomMessage client' "left"]
+      r <- liftM UpdatedRoom $ findRoom conn x
+      return $ [r $ roomMessage client' "left"]
     Nothing -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
       return $ []

@@ -3,8 +3,7 @@ create table rooms (
   room_id serial primary key,
   created timestamp with time zone default now(),
   lat float,
-  lng float,
-  died timestamp with time zone
+  lng float
 );
 
 create table clients (
