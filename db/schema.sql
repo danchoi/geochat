@@ -16,4 +16,4 @@ create table clients (
   exited timestamp with time zone 
 );
 
-
+create index clients_room_id_idx on clients (room_id);
