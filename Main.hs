@@ -81,9 +81,8 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             liftIO $ processMsg conn client Leave
             let s' = removeClientSink (clientId client) s
             putStrLn $ "Connection closed by client " ++ (show . clientId $ client)
-            -- broadcast ((nickname client) `mappend` " disconnected") s'
-            -- TODO REMOVE CLIENT FROM ALL ROOMS, UPDATE EXITED TIMESTAMP
-
+            msgsFromServer <- liftIO $ processMsg conn client Leave
+            liftIO $ readMVar state >>= broadcast msgsFromServer
             return s'
         _ -> return ()
 

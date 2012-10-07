@@ -16,3 +16,7 @@
   as a parameter, because snap has already read this from the socket. 
 
 
+
+message when a client appears and disappears (maybe place on map)
+
+
