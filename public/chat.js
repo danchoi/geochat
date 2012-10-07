@@ -169,15 +169,13 @@ $(document).ready(function() {
   $("form#chat_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#message");
-    geogossip.ws.send(textfield.val());
     textfield.val("");
   });
 
   $("form#nick_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#nickname");
-    var msg = {type: "NewClient", nickname: textfield.val()};
-    geogossip.ws.send(JSON.stringify(msg));
+    geogossip.tellServer({type: 'ChangeNickname', nickname: textfield.val()});
   });
 
   $("#create_stream").click(function(e) {

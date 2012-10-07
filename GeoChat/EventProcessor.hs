@@ -51,7 +51,11 @@ processMsg conn client (LocationUpdated (lat, lng)) = do
   r <- liftM UpdatedClient $ refreshClient conn client
   return [r]
 
-processMsg conn client (ChangeNickname newname) = undefined
+processMsg conn client (ChangeNickname newname) = do
+  let q = "update clients set nickname = ? where client_id = ?" 
+  execute conn q (newname, clientId client)
+  r <- liftM UpdatedClient $ refreshClient conn client
+  return [r]
 
 processMsg conn client (CreateRoom (lat, lng)) = do
   let cid = clientId client
