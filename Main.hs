@@ -33,6 +33,10 @@ addClientSink cs s = cs:s
 removeClientSink :: ClientId -> ServerState -> ServerState
 removeClientSink cid s = filter ((/= cid) . fst) $ s 
 
+broadcast :: [MessageFromServer] -> ServerState -> IO ()
+broadcast ms clients = do
+  forM_ clients $ \(_, clientSink) -> WS.sendSink clientSink $ WS.textData $ encode ms
+
 main :: IO ()
 main = do
     state <- newMVar newServerState
@@ -64,7 +68,7 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
-            -- TODO broadcast this
+            liftIO $ readMVar state >>= broadcast msgsFromServer
             return ()
         Nothing -> do 
             let errMsg = (E.decodeUtf8 rawMsg)
