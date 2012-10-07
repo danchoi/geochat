@@ -120,10 +120,9 @@ $(document).ready(function() {
   };
 
   geogossip.ws.onmessage = function(event){
-    console.log("on message event: " + event.data);
+    console.log("message from server: " + event.data);
 
     if (event.data.length > 0) {
-      console.log("data from server: " + event.data);
       var x = JSON.parse(event.data);
       var serverEvent = geogossip.serverEvents[x.serverEvent];
       if (typeof serverEvent == 'function') {

@@ -26,7 +26,7 @@ instance FromJSON MessageFromClient where
 
 instance ToJSON MessageFromServer where
   toJSON (UpdatedClient c) = object ["type" .= ("UpdatedClient" :: Text), "client" .= c]
-  toJSON (UpdatedRoom room) = object ["type" .= ("UpdatedRooms" :: Text), "rooms" .= room]
+  toJSON (UpdatedRoom room) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room]
   toJSON (Broadcast user room text) = object ["type" .= ("BroadCast" :: Text), "user" .= user, "room" .= room, "text" .= text]
   toJSON (ErrorMessage text) = object ["type" .= ("ErrorMessage" :: Text), "content" .= text]
 
