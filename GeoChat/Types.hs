@@ -28,7 +28,7 @@ type ClientId = Int
 type Nickname = Text
 
 data Client = Client { clientId :: Int 
-                     , nickName :: Maybe Text
+                     , nickName :: Text  -- anon by default
                      , clientLatLng :: Maybe LatLng
                      , clientRoomId :: Maybe Int
                      } deriving (Generic, Show)
