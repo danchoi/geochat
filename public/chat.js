@@ -201,7 +201,8 @@ function createMap() {
   overlay = new google.maps.OverlayView();
   overlay.setMap(map);
   overlay.onAdd = function() {
-    layer = d3.select(this.getPanes().overlayLayer).append("div")
+
+    layer = d3.select(this.getPanes().overlayMouseTarget).append("div")
         .attr("class", "rooms");
     
     overlay.draw = function() {
@@ -211,6 +212,8 @@ function createMap() {
 
       var marker = layer.selectAll(".rooms svg")
           .data(d3.entries(data))
+          .on("mouseover", function(d, i) { 
+            console.log("mouseover on " + JSON.stringify(d)); })
           .each(transform) // update existing markers
         .enter().append("svg:svg")
           .each(transform)
@@ -218,7 +221,7 @@ function createMap() {
 
       // Add a circle.
       marker.append("svg:circle")
-          .attr("r", 4.5)
+          .attr("r", 8.5)
           .attr("cx", 25)
           .attr("cy", 25);
 
