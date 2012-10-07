@@ -8,7 +8,7 @@ create table rooms (
 
 create table clients (
   client_id serial primary key,
-  nickname varchar null,
+  nickname varchar default 'anon',
   room_id integer null references rooms(room_id),
   created timestamp with time zone default now()
 );
