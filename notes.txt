@@ -1,5 +1,6 @@
 
 
+
 ClientId should be opaque to the end user. This is mapped to a sink in
 the websocket server.
 
@@ -18,4 +19,13 @@ http://hackage.haskell.org/package/websockets-snap
 
 ?
 Use Either for all processMsg?
+
+
+install postgis
+
+
+ 2012  psql -d geochat -f postgis.sql
+ 2013  psql -d geochat -f spatial_ref_sys.sql 
+ 2014  psql -d geochat -f postgis_comments.sql 
+
 

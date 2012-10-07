@@ -15,3 +15,5 @@ create table clients (
   created timestamp with time zone default now(),
   exited timestamp with time zone 
 );
+
+

@@ -79,6 +79,8 @@ var geogossip = {
           layer.selectAll("svg.marker").data(rooms).exit().remove();
           rooms.push(r);
           layer.selectAll("svg.marker").data(rooms).enter();
+      } else if (j && rooms[j].numParticipants == r.numParticipants) {
+          return;
           
       } else {
         rooms.push(r);
