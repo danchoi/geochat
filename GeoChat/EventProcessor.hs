@@ -67,9 +67,9 @@ processMsg conn client (ChangeNickname newname) = do
 -- TODO if close to existing live room, Join that room
 processMsg conn client (CreateRoom (lat, lng)) = do
   let q0 = "select rooms.room_id, rooms.lat, rooms.lng, \
-      \ST_Distance(ST_Transform( ST_GeomFromText('POINT(' || ? || ' ' || ? || ')', 4326), 2163 ), rooms.geom) dist \
+      \ST_Distance(ST_Transform(ST_GeomFromText('POINT(' || ? || ' ' || ? || ')', 4326), 2163 ), rooms.geom) dist \
       \from rooms where \
-      \ST_Distance(ST_Transform( ST_GeomFromText('POINT(' || ? || ' ' || ? || ')', 4326), 2163 ), rooms.geom) < 700 \
+      \ST_Distance(ST_Transform(ST_GeomFromText('POINT(' || ? || ' ' || ? || ')', 4326), 2163 ), rooms.geom) < 700 \
       \and room_id in (select room_id from rooms inner join clients using(room_id) group by room_id) \
       \order by dist asc"
   xs :: [(Int, Double, Double, Double)] <- query conn q0 (lng, lat, lng, lat)
