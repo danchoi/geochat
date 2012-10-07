@@ -1,6 +1,7 @@
 WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 var map;
+var rooms = [];
 
 var geogossip = {
   ws: null,
@@ -58,22 +59,6 @@ var geogossip = {
         return {strokeColor: "blue", strokeOpacity: 0.6, strokeWeight: 4, fillColor: "#FFFFFF", fillOpacity: 0.1, map: map, center: center, radius: 180};
       }
     },
-    createMap: function() {
-      var latLng = new google.maps.LatLng(42.36, -71.08);
-      var myOptions = { center: latLng, zoom: 12, mapTypeId: google.maps.MapTypeId.ROADMAP };
-      $("#create_chat").hide();
-      map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-      google.maps.event.addListener(map, 'click', function(event) { 
-        geogossip.tellServer( {type: 'CreateRoom', lat: event.latLng.lat(), lng: event.latLng.lng()} );
-      });
-      if(navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          geogossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
-          geogossip.tellServer({type: 'LocationUpdated', lat: pos.coords.latitude, lng: pos.coords.longitude}); 
-          $("#create_chat").show();
-        }, function() { /* No geolocation */ });
-      }
-    },
   },
   serverEvents: {
     UpdatedRoom: function(data) {
@@ -83,10 +68,9 @@ var geogossip = {
       } else {
         console.log("creating room: "+ JSON.stringify(r));
         // TODO change to d3
-        var center = new google.maps.LatLng(r.latLng[0], r.latLng[1]);
-        var circle = new google.maps.Circle(geogossip.map.circle.drawOptions(center));
-        var room = new geogossip.Room(circle, r);
-        geogossip.rooms[r.roomId] = room;
+        geogossip.rooms[r.roomId] = r;
+        rooms.push(r);
+        window.overlay.draw();
       }
     }
   }
@@ -116,7 +100,7 @@ function getURLParameter(name) {
 
 $(document).ready(function() {
   var webSocketURL = 'ws://localhost:9160'; // : 'ws://poddb.com:9394';
-  geogossip.map.createMap();
+  createMap();
   geogossip.ws = new WebSocket(webSocketURL); 
   geogossip.ws.onopen = function(event){
     console.log("Connected to server");
@@ -191,31 +175,35 @@ $(document).ready(function() {
 
 
 
-// d3 test
+// d3
 
+var overlay;
 
-function drawRooms(data) {
-  console.log("drawRooms");
-  var overlay = new google.maps.OverlayView();
+function createMap() {
+  
+  var latLng = new google.maps.LatLng(42.36, -71.08);
+  var myOptions = { center: latLng, zoom: 12, mapTypeId: google.maps.MapTypeId.ROADMAP };
+  map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+  google.maps.event.addListener(map, 'click', function(event) { 
+    geogossip.tellServer( {type: 'CreateRoom', lat: event.latLng.lat(), lng: event.latLng.lng()} );
+  });
 
-  // Add the container when the overlay is added to the map.
+  overlay = new google.maps.OverlayView();
+  overlay.setMap(map);
   overlay.onAdd = function() {
     var layer = d3.select(this.getPanes().overlayLayer).append("div")
         .attr("class", "rooms");
 
-    // Draw each marker as a separate SVG element.
-    // We could use a single SVG, but what size would it have?
     overlay.draw = function() {
       var projection = this.getProjection();
 
-      console.log("projection "+JSON.stringify(data.rooms));
-      var marker = layer.selectAll("svg")
-          .data(d3.entries(data.rooms))
+      var data = rooms; // global var
+      var marker = layer.selectAll(".rooms svg")
+          .data(d3.entries(data))
           .each(transform) // update existing markers
         .enter().append("svg:svg")
           .each(transform)
           .attr("class", "marker");
-
 
       // Add a circle.
       marker.append("svg:circle")
@@ -229,18 +217,34 @@ function drawRooms(data) {
           .attr("dy", 28)
           .text(function(d) { return d.key; });
 
-      function transform(d) {
-        console.log(JSON.stringify(d));
-        d = new google.maps.LatLng(d.value.lat, d.value.lng);
+      function transformold(d) {
+        d = new google.maps.LatLng(d.value[1], d.value[0]);
         d = projection.fromLatLngToDivPixel(d);
         return d3.select(this)
             .style("left", (d.x-25) + "px")
             .style("top", (d.y-25) + "px");
       }
-    };
-  };
+      function transform(d) {
 
-  // Bind our overlay to the map…
-  overlay.setMap(map);
-};
+        console.log(this);
+        console.log(d);
+        d1 = new google.maps.LatLng(d.value.latLng[0], d.value.latLng[1]);
+        console.log(d1);
+        d2 = projection.fromLatLngToDivPixel(d1);
+        console.log(d2);
+        return d3.select(this)
+            .style("left", (d2.x-25) + "px")
+            .style("top", (d2.y-25) + "px");
+      }
+    };
+  }
+
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      geogossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+      geogossip.tellServer({type: 'LocationUpdated', lat: pos.coords.latitude, lng: pos.coords.longitude}); 
+      $("#create_chat").show();
+    }, function() { /* No geolocation */ });
+  }
+}
 

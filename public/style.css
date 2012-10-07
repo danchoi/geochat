@@ -170,7 +170,7 @@ span.user {
 }
 
 .rooms circle {
-  fill: brown;
+  fill: red;
   stroke: black;
   stroke-width: 1.5px;
 }
