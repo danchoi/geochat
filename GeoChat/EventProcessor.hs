@@ -90,11 +90,11 @@ processMsg conn client Leave = do
   let r = clientRoomId client'
   case r of 
     Just x -> do
-      execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client)
+      execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
       r <- liftM UpdatedRoom $ findRoom conn x
       return $ [r $ roomMessage client' "left"]
     Nothing -> do
-      execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client)
+      execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
       return $ []
 
 

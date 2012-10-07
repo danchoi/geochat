@@ -81,8 +81,9 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             liftIO $ processMsg conn client Leave
             let s' = removeClientSink (clientId client) s
             putStrLn $ "Connection closed by client " ++ (show . clientId $ client)
+            putStrLn $ "Sinks left: " ++ ((show . length) s')
             msgsFromServer <- liftIO $ processMsg conn client Leave
-            liftIO $ readMVar state >>= broadcast msgsFromServer
+            liftIO $ broadcast msgsFromServer s'
             return s'
         _ -> return ()
 
