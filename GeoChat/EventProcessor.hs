@@ -25,7 +25,6 @@ createClient conn = do
                    , clientRoomId = Nothing
                    }) 
 
--- makes Client record from current database information
 refreshClient :: Connection -> Client -> IO Client
 refreshClient conn client = do
     let q = "select lat, lng, room_id from clients where client_id = ?" 
@@ -36,6 +35,14 @@ refreshClient conn client = do
                   
     return (client {clientLatLng = latLng, clientRoomId = mrid})
 
+findRoom :: Connection -> RoomId -> IO Room
+findRoom conn rid = do
+    let q = "select lat, lng, count(*) from clients where room_id = ?"
+    ((lat, lng, count):_) :: [(Double, Double, Int)] <- query conn q (Only rid)
+    return (Room {roomId = rid, latLng = (lat, lng), numParticipants = count})
+
+refreshRoom :: Connection -> Room -> IO Room
+refreshRoom conn room = findRoom conn (roomId room)
 
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
@@ -58,23 +65,24 @@ processMsg conn client (ChangeNickname newname) = do
   return [r]
 
 processMsg conn client (CreateRoom (lat, lng)) = do
-  let cid = clientId client
-      q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
-      q2 = "update clients set room_id = ? where client_id = ?"
+  let q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
   ((Only rid):_) :: [Only Int] <- query conn q (lat, lng)
-  let r = UpdatedRoom (Room { roomId = rid, latLng = (lat, lng) , numParticipants = 0})
-  execute conn q2 (rid, cid)
-  c <- liftM UpdatedClient $ refreshClient conn client
-  return [r, c]
+  processMsg conn client (ChangeRoom rid)
 
-{-
-processMsg conn client (ChangeRoom maybeRoomId) = do
+processMsg conn client (ChangeRoom rid) = do
+  maybeOldRoomId <- liftM clientRoomId $ refreshClient conn client
   execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-  xs :: [(Double, Double)] <- query conn "select lat, lng from rooms where room_id = ?" [rid]
-  let latLng = head xs 
-  let room = Room { roomId = rid, latLng = latLng, numParticipants = 1 }
-  return $ [UpdatedRoom room]
--}
+  c <- liftM UpdatedClient $ refreshClient conn client
+  r <- liftM UpdatedRoom $ findRoom conn rid
+  return $ [c, r]
+
+processMsg conn client Leave = do
+  maybeOldRoomId <- liftM clientRoomId $ refreshClient conn client
+  execute conn "update clients set room_id = null where client_id = ?" (Only $ clientId client)
+  -- TODO refresh the room just left
+  return $ []
+
+
 
 processMsg conn client (PostMessage msg) = undefined
 

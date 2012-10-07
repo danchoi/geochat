@@ -40,8 +40,9 @@ data MessageFromClient = ListActiveRooms
                        | LocationUpdated LatLng
                        | CreateRoom LatLng
                        | ChangeNickname Nickname 
-                       | ChangeRoom (Maybe RoomId)
-                       | PostMessage Text deriving (Show)
+                       | ChangeRoom RoomId
+                       | PostMessage Text 
+                       | Leave deriving (Show)
 
 data MessageFromServer = UpdatedClient Client
                        | UpdatedRoom Room
