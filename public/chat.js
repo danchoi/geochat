@@ -214,7 +214,7 @@ function createMap() {
       var marker = layer.selectAll(".rooms svg")
           .data(d3.entries(data))
           .on("mouseover", function(d, i) { 
-            console.log("mouseover on " + d.value.roomId) ;
+            // console.log("mouseover on " + d.value.roomId) ;
             // geogossip.tellServer({type: 'JoinRoom', roomId: d.value.roomId});
           })
           .each(transform) // update existing markers
