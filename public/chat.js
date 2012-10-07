@@ -63,15 +63,26 @@ var geogossip = {
   serverEvents: {
     UpdatedRoom: function(data) {
       var r = data.room;
-      if (r.numParticipants === 0) {
-        delete geogossip.rooms[r.roomId];
-      } else {
-        console.log("creating room: "+ JSON.stringify(r));
-        // TODO change to d3
-        geogossip.rooms[r.roomId] = r;
-        rooms.push(r);
-        window.overlay.draw();
+      var j = null;
+      for (var i = 0; i < rooms.length; i++) {
+        if (rooms[i].roomId === r.roomId) {
+            j = i; // room exists at j
+            break;
+        }
       }
+      if (j && r.numParticipants == 0) {
+          rooms.splice(j,1); 
+          layer.selectAll("svg.marker").data(rooms).exit().remove();
+      } else if (j && rooms[j].numParticipants != r.numParticipants) {
+          rooms.splice(j,1); 
+          layer.selectAll("svg.marker").data(rooms).exit().remove();
+          rooms.push(r);
+          layer.selectAll("svg.marker").data(rooms).enter();
+          
+      } else {
+        rooms.push(r);
+      }
+      window.overlay.draw();
     }
   }
 };
@@ -122,17 +133,13 @@ $(document).ready(function() {
       return;
 
     } else {  // receive a chat message 
-        
         var message = event.data;
         message.prototype = messagePrototype;
         console.log(message.toString());
         $('#chatStream').append(ich.message(message));
         var liveRoomId = message.room_id;
         if (liveRoomId ) {
-          console.log("live room id: "+liveRoomId);
-          // TODO CHANGE
           x = roomCircles[liveRoomId];
-          console.log(x);
           x.setOptions(geogossip.map.circle.chatActivityOptions);
           setTimeout( function() { x.setOptions(geogossip.map.circle.baseOptions); }, 100); 
         }
@@ -177,7 +184,10 @@ $(document).ready(function() {
 
 // d3
 
+// layer.selectAll("svg.marker").data([]).exit().remove()
+
 var overlay;
+var layer;
 
 function createMap() {
   
@@ -191,13 +201,14 @@ function createMap() {
   overlay = new google.maps.OverlayView();
   overlay.setMap(map);
   overlay.onAdd = function() {
-    var layer = d3.select(this.getPanes().overlayLayer).append("div")
+    layer = d3.select(this.getPanes().overlayLayer).append("div")
         .attr("class", "rooms");
-
+    
     overlay.draw = function() {
       var projection = this.getProjection();
 
       var data = rooms; // global var
+
       var marker = layer.selectAll(".rooms svg")
           .data(d3.entries(data))
           .each(transform) // update existing markers
@@ -215,7 +226,7 @@ function createMap() {
       marker.append("svg:text")
           .attr("x", 33)
           .attr("dy", 28)
-          .text(function(d) { return d.key; });
+          .text(function(d) { return d.value.numParticipants; });
 
       function transformold(d) {
         d = new google.maps.LatLng(d.value[1], d.value[0]);
@@ -225,13 +236,8 @@ function createMap() {
             .style("top", (d.y-25) + "px");
       }
       function transform(d) {
-
-        console.log(this);
-        console.log(d);
         d1 = new google.maps.LatLng(d.value.latLng[0], d.value.latLng[1]);
-        console.log(d1);
         d2 = projection.fromLatLngToDivPixel(d1);
-        console.log(d2);
         return d3.select(this)
             .style("left", (d2.x-25) + "px")
             .style("top", (d2.y-25) + "px");
