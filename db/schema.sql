@@ -12,5 +12,6 @@ create table clients (
   lat float,
   lng float,
   room_id integer null references rooms(room_id),
-  created timestamp with time zone default now()
+  created timestamp with time zone default now(),
+  exited timestamp with time zone 
 );

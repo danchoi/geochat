@@ -78,7 +78,7 @@ processMsg conn client (ChangeRoom rid) = do
 
 processMsg conn client Leave = do
   maybeOldRoomId <- liftM clientRoomId $ refreshClient conn client
-  execute conn "update clients set room_id = null where client_id = ?" (Only $ clientId client)
+  execute conn "update clients set room_id = null, exited = now()  where client_id = ?" (Only $ clientId client)
   -- TODO refresh the room just left
   return $ []
 
