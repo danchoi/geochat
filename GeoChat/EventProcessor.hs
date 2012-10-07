@@ -67,20 +67,36 @@ processMsg conn client (ChangeNickname newname) = do
 processMsg conn client (CreateRoom (lat, lng)) = do
   let q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
   ((Only rid):_) :: [Only Int] <- query conn q (lat, lng)
-  processMsg conn client (ChangeRoom rid)
+  processMsg conn client (JoinRoom rid)
 
-processMsg conn client (ChangeRoom rid) = do
-  maybeOldRoomId <- liftM clientRoomId $ refreshClient conn client
-  execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-  c <- liftM UpdatedClient $ refreshClient conn client
-  r <- liftM UpdatedRoom $ findRoom conn rid
-  return $ [c, r]
+processMsg conn client (JoinRoom rid) = do
+  client' <- refreshClient conn client
+  let r = clientRoomId client
+  case r of 
+    Just x -> do
+        execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
+        c <- liftM UpdatedClient $ refreshClient conn client
+        r1 <- liftM UpdatedRoom $ findRoom conn rid
+        r2 <- liftM UpdatedRoom $ findRoom conn x
+        return [c, r1, r2]
+    Nothing -> do
+        execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
+        c<- liftM UpdatedClient $ refreshClient conn client
+        r <- liftM UpdatedRoom $ findRoom conn rid
+        return [c, r]
 
 processMsg conn client Leave = do
-  maybeOldRoomId <- liftM clientRoomId $ refreshClient conn client
-  execute conn "update clients set room_id = null, exited = now()  where client_id = ?" (Only $ clientId client)
-  -- TODO refresh the room just left
-  return $ []
+  client' <- refreshClient conn client
+  let r = clientRoomId client
+  case r of 
+    Just x -> do
+      execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client)
+      r <- liftM UpdatedRoom $ findRoom conn x
+      return $ [r]
+    Nothing -> do
+      execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client)
+      return $ []
+
 
 
 

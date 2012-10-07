@@ -18,7 +18,8 @@ instance FromJSON MessageFromClient where
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
     | Just "CreateRoom" <- M.lookup "type" v = CreateRoom <$> ((,) <$> v .: "lat" <*>  v .: "lng")
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
-    | Just "ChangeRoom" <- M.lookup "type" v = ChangeRoom <$> v .: "roomId" 
+    | Just "LeaveRoom" <- M.lookup "type" v = LeaveRoom <$> v .: "roomId" 
+    | Just "JoinRoom" <- M.lookup "type" v = JoinRoom <$> v .: "roomId" 
     | Just "PostMessage" <- M.lookup "type" v = PostMessage <$> v .: "content" 
     | otherwise  = mzero
   parseJSON _ = mzero
