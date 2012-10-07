@@ -44,6 +44,7 @@ var geogossip = {
         x.circle.setOptions(x.mouseoutOpts());
       }
     }(this));
+
     google.maps.event.addListener(circle, 'click', function(x) {
       return function() {
         console.log("Room clicked: "+ x.info.roomId); 
@@ -212,8 +213,12 @@ function createMap() {
 
       var marker = layer.selectAll(".rooms svg")
           .data(d3.entries(data))
-          .on("mouseover", function(d, i) { 
-            console.log("mouseover on " + JSON.stringify(d)); })
+          .on("click", function(d, i) { 
+            console.log("clicks on " + d.value.roomId) ;
+            geogossip.tellServer({type: 'JoinRoom', roomId: d.value.roomId});
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+          })
           .each(transform) // update existing markers
         .enter().append("svg:svg")
           .each(transform)
@@ -231,13 +236,6 @@ function createMap() {
           .attr("dy", 28)
           .text(function(d) { return d.value.numParticipants; });
 
-      function transformold(d) {
-        d = new google.maps.LatLng(d.value[1], d.value[0]);
-        d = projection.fromLatLngToDivPixel(d);
-        return d3.select(this)
-            .style("left", (d.x-25) + "px")
-            .style("top", (d.y-25) + "px");
-      }
       function transform(d) {
         d1 = new google.maps.LatLng(d.value.latLng[0], d.value.latLng[1]);
         d2 = projection.fromLatLngToDivPixel(d1);
