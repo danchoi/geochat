@@ -64,6 +64,7 @@ processMsg conn client (ChangeNickname newname) = do
   r <- liftM UpdatedClient $ refreshClient conn client'
   return [r]
 
+-- TODO if close to existing live room, Join that room
 processMsg conn client (CreateRoom (lat, lng)) = do
   let q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
   ((Only rid):_) :: [Only Int] <- query conn q (lat, lng)
@@ -76,8 +77,8 @@ processMsg conn client (JoinRoom rid) = do
     Just x -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
         c <- liftM UpdatedClient $ refreshClient conn client
-        rjoined <- liftM UpdatedRoom $ findRoom conn rid
         rleft <- liftM UpdatedRoom $ findRoom conn x 
+        rjoined <- liftM UpdatedRoom $ findRoom conn rid
         return [c, rjoined $ roomMessage client' "joined" , rleft $ roomMessage client' "left"]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
