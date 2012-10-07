@@ -60,9 +60,12 @@ processMsg conn client (ChangeNickname newname) = do
 processMsg conn client (CreateRoom (lat, lng)) = do
   let cid = clientId client
       q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
-  xs :: [Only Int] <- query conn q (lat, lng)
-  let r = UpdatedRoom (Room { roomId = (fromOnly $ head xs) , latLng = (lat, lng) , numParticipants = 0})
-  return [r]
+      q2 = "update clients set room_id = ? where client_id = ?"
+  ((Only rid):_) :: [Only Int] <- query conn q (lat, lng)
+  let r = UpdatedRoom (Room { roomId = rid, latLng = (lat, lng) , numParticipants = 0})
+  execute conn q2 (rid, cid)
+  c <- liftM UpdatedClient $ refreshClient conn client
+  return [r, c]
 
 {-
 processMsg conn client (ChangeRoom maybeRoomId) = do
