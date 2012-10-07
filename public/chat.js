@@ -213,11 +213,9 @@ function createMap() {
 
       var marker = layer.selectAll(".rooms svg")
           .data(d3.entries(data))
-          .on("click", function(d, i) { 
-            console.log("clicks on " + d.value.roomId) ;
-            geogossip.tellServer({type: 'JoinRoom', roomId: d.value.roomId});
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+          .on("mouseover", function(d, i) { 
+            console.log("mouseover on " + d.value.roomId) ;
+            // geogossip.tellServer({type: 'JoinRoom', roomId: d.value.roomId});
           })
           .each(transform) // update existing markers
         .enter().append("svg:svg")
