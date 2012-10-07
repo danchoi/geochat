@@ -20,47 +20,44 @@ import Data.Aeson
 import Data.Text.Lazy.Encoding as E
 import Database.PostgreSQL.Simple (Connection)
 
+type ClientSink = (ClientId, WS.Sink WS.Hybi00)
+
+type ServerState = [ClientSink]
+
+newServerState :: ServerState 
+newServerState = []
+
+addClientSink :: ClientSink -> ServerState -> ServerState
+addClientSink cs s = cs:s
+
+removeClientSink :: ClientId -> ServerState -> ServerState
+removeClientSink cid s = filter ((/= cid) . fst) $ s 
+
 main :: IO ()
 main = do
-    WS.runServer "0.0.0.0" 9160 $ application 
+    state <- newMVar newServerState
+    WS.runServer "0.0.0.0" 9160 $ application state
 
-application :: WS.Request -> WS.WebSockets WS.Hybi00 ()
-application rq = do
+application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
+application state rq = do
     WS.acceptRequest rq
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
     sink <- WS.getSink
+    sinks <- liftIO $ readMVar state
     conn <- liftIO GeoChat.EventProcessor.dbconn
+    client <- liftIO $ createClient conn
+    liftIO $ putStrLn $ "Created client " `mappend` (show $ clientId client) 
+    liftIO $ modifyMVar_ state $ \s -> do
+        let s' = addClientSink ((clientId client), sink) s
+        WS.sendSink sink $ WS.textData $ "Welcome client " `mappend` (T.pack . show $ clientId client)
+        --- broadcast a joined message
+        return s'
     rooms <- liftIO $ processMsg conn Nothing ListActiveRooms 
     WS.sendTextData $ encode rooms 
-    establishClient conn sink
+    receiveMessage state conn client sink
 
-establishClient :: WS.Protocol p => Connection -> WS.Sink a -> WS.WebSockets p ()
-establishClient conn sink = flip WS.catchWsError catchDisconnect $ do
-    rawMsg <- WS.receiveData 
-    let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
-    case maybeClientMessage of
-        Just (NewClient newNick) -> do 
-            client <- liftIO $ createClient conn newNick
-            liftIO $ putStrLn $ "Created client " `mappend` (show $ clientId client) 
-            procClientMsg conn client sink
-        -- TODO: paint map
-        Just _ -> do 
-            liftIO $ TL.putStrLn $ "Message not allowed yet: " `mappend`  (E.decodeUtf8 rawMsg)
-            establishClient conn sink
-        Nothing -> do 
-            let errMsg = (E.decodeUtf8 rawMsg)
-            liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
-            establishClient conn sink
-  where
-    catchDisconnect e = case fromException e of
-        Just WS.ConnectionClosed -> liftIO $ do
-            putStrLn "CONN CLOSED"
-            -- broadcast ((nickname client) `mappend` " disconnected") s'
-            return ()
-        _ -> return ()
-
-procClientMsg :: WS.Protocol p => Connection -> Client -> WS.Sink a -> WS.WebSockets p ()
-procClientMsg conn client sink = flip WS.catchWsError catchDisconnect $ do
+receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink a -> WS.WebSockets p ()
+receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
     let maybeClientMessage = decode rawMsg :: Maybe MessageFromClient
     case maybeClientMessage of
@@ -73,7 +70,7 @@ procClientMsg conn client sink = flip WS.catchWsError catchDisconnect $ do
             let errMsg = (E.decodeUtf8 rawMsg)
             liftIO $ TL.putStrLn $ "Failed to decode: " `mappend`  errMsg
             return () 
-    procClientMsg conn client sink
+    receiveMessage state conn client sink
   where
     catchDisconnect e = case fromException e of
         Just WS.ConnectionClosed -> liftIO $ do

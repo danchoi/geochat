@@ -25,12 +25,11 @@ clientExists conn nickname = do
     return (length xs == 1)
 -}
 
-createClient :: Connection -> Text -> IO Client
-createClient conn newNick = do
-    let q = "insert into clients (nickname) values (?) returning client_id, nickname"
-    xs@(x:_) :: [(Int, Text)] <- query conn q [newNick]
+createClient :: Connection -> IO Client
+createClient conn = do
+    let q = "insert into clients (nickname) values ('anon') returning client_id, nickname"
+    xs@(x:_) :: [(Int, Text)] <- query_ conn q 
     return (Client {clientId = (fst x) }) 
-
 
 
 processMsg :: Connection -> Maybe Client -> MessageFromClient -> IO [MessageFromServer]
