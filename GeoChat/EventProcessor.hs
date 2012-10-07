@@ -19,7 +19,23 @@ createClient :: Connection -> IO Client
 createClient conn = do
     let q = "insert into clients (nickname) values ('anon') returning client_id, nickname"
     xs@(x:_) :: [(Int, Text)] <- query_ conn q 
-    return (Client {clientId = (fst x) }) 
+    return (Client { clientId = (fst x)
+                   , nickName = Just ("anon" :: Text)
+                   , clientLatLng = Nothing
+                   , clientRoomId = Nothing
+                   }) 
+
+-- makes Client record from current database information
+refreshClient :: Connection -> Client -> IO Client
+refreshClient conn client = do
+    let q = "select lat, lng, room_id from clients where client_id = ?" 
+    xs@((mlat, mlng, mrid):_) :: [(Maybe Double, Maybe Double, Maybe Int)] <- query conn q (Only $ clientId client)
+    let latLng = case (mlat,mlng) of 
+                   (Just lat, Just lng) -> Just (lat, lng)
+                   otherwise -> Nothing
+                  
+    return (client {clientLatLng = latLng, clientRoomId = mrid})
+
 
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
@@ -32,7 +48,8 @@ processMsg conn _ ListActiveRooms = do
 processMsg conn client (LocationUpdated (lat, lng)) = do
   let q = "update clients set lat = ?, lng = ? where client_id = ?" 
   execute conn q (lat, lng, clientId client)
-  return []
+  r <- liftM UpdatedClient $ refreshClient conn client
+  return [r]
 
 processMsg conn client (ChangeNickname newname) = undefined
 

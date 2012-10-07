@@ -27,15 +27,14 @@ type RoomId = Int
 type ClientId = Int
 type Nickname = Text
 
-data Client = Client { clientId :: Int } deriving (Generic, Show)
+data Client = Client { clientId :: Int 
+                     , nickName :: Maybe Text
+                     , clientLatLng :: Maybe LatLng
+                     , clientRoomId :: Maybe Int
+                     } deriving (Generic, Show)
+
 
 instance ToJSON Client
-
--- User is the client-facing version of Client
-
-data User = User { userClientId :: Int, userNickname :: Text } deriving (Generic, Show)
-
-instance ToJSON User
 
 data MessageFromClient = ListActiveRooms
                        | LocationUpdated LatLng
@@ -44,9 +43,9 @@ data MessageFromClient = ListActiveRooms
                        | ChangeRoom (Maybe RoomId)
                        | PostMessage Text deriving (Show)
 
-data MessageFromServer = UpdatedUser User
+data MessageFromServer = UpdatedClient Client
                        | UpdatedRoom Room
-                       | Broadcast User Room Text 
+                       | Broadcast Client Room Text 
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 
