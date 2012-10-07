@@ -12,24 +12,25 @@ var geogossip = {
   serverEvents: {
     UpdatedRoom: function(data) {
       var r = data.room;
-      var j = null;
+      var j = -1;
       for (var i = 0; i < rooms.length; i++) {
         if (rooms[i].roomId === r.roomId) {
             j = i; // room exists at j
             break;
         }
       }
-      if (j && r.numParticipants == 0) {
+      //    console.log("j: "+j+" r.numParticipants: "+r.numParticipants);
+      //    This stuff with -1 j is a hack
+      if (j > -1 && r.numParticipants == 0) {
           rooms.splice(j,1); 
           layer.selectAll("svg.marker").data(rooms).exit().remove();
-      } else if (j && rooms[j].numParticipants != r.numParticipants) {
+      } else if (j > -1 && rooms[j].numParticipants != r.numParticipants) {
           rooms.splice(j,1); 
           layer.selectAll("svg.marker").data(rooms).exit().remove();
           rooms.push(r);
           layer.selectAll("svg.marker").data(rooms).enter();
-      } else if (j && rooms[j].numParticipants == r.numParticipants) {
+      } else if (j > -1  && rooms[j].numParticipants == r.numParticipants) {
           return;
-          
       } else {
         rooms.push(r);
       }
