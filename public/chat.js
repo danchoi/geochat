@@ -76,15 +76,18 @@ var geogossip = {
     },
   },
   serverEvents: {
-    roomCreated: function(roomInfo) {
-      console.log("creating room: "+ JSON.stringify(roomInfo));
-      var center = new google.maps.LatLng(roomInfo.lat, roomInfo.lng);
-      var circle = new google.maps.Circle(geogossip.map.circle.drawOptions(center));
-      var room = new geogossip.Room(circle, roomInfo);
-      geogossip.rooms[roomInfo.roomId] = room;
-    },
-    roomsList: function(rooms) {
-      drawRooms(rooms);
+    UpdatedRoom: function(data) {
+      var r = data.room;
+      if (r.numParticipants === 0) {
+        delete geogossip.rooms[r.roomId];
+      } else {
+        console.log("creating room: "+ JSON.stringify(r));
+        // TODO change to d3
+        var center = new google.maps.LatLng(r.latLng[0], r.latLng[1]);
+        var circle = new google.maps.Circle(geogossip.map.circle.drawOptions(center));
+        var room = new geogossip.Room(circle, r);
+        geogossip.rooms[r.roomId] = room;
+      }
     }
   }
 };
@@ -120,24 +123,21 @@ $(document).ready(function() {
   };
 
   geogossip.ws.onmessage = function(event){
-    console.log("message from server: " + event.data);
-
-    if (event.data.length > 0) {
-      var x = JSON.parse(event.data);
-      var serverEvent = geogossip.serverEvents[x.serverEvent];
-      if (typeof serverEvent == 'function') {
-        // dynamically dispatch to one of the geogossip.serverEvents
-        serverEvent(x);
+    if (event.data.length > 0 && event.data[0] == '[') {
+      var x  = JSON.parse(event.data);
+      var messages = JSON.parse(event.data);
+      for (var i = 0; i < messages.length; i++) {
+        var message = messages[i];
+        var f = geogossip.serverEvents[message.type];
+        console.log("server: " + JSON.stringify(message));
+        if (typeof f == 'function') {
+          f(message);
+        }
       }
+
       return;
 
-
-      if (event.data[0] == '{') {  // We have a JSON payload and should parse it
-       var x;
-       console.log(event.data);
-       var data = JSON.parse(event.data);
-       // rooms list
-     } else {  // receive a chat message 
+    } else {  // receive a chat message 
         
         var message = event.data;
         message.prototype = messagePrototype;
@@ -153,7 +153,7 @@ $(document).ready(function() {
           setTimeout( function() { x.setOptions(geogossip.map.circle.baseOptions); }, 100); 
         }
         $('#chatStream').animate({scrollTop: $('#chatStream').height()});
-     }
+
     }
   };
   
@@ -192,7 +192,6 @@ $(document).ready(function() {
 
 
 // d3 test
-//
 
 
 function drawRooms(data) {
