@@ -11,9 +11,10 @@ create table clients (
   nickname varchar default 'anon',
   lat float,
   lng float,
-  room_id integer null references rooms(room_id),
+  room_id integer null references rooms(room_id) on delete cascade, 
   created timestamp with time zone default now(),
   exited timestamp with time zone 
 );
 
 create index clients_room_id_idx on clients (room_id);
+

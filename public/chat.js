@@ -9,58 +9,6 @@ var geogossip = {
   tellServer: function (data) {
     geogossip.ws.send(JSON.stringify(data));
   },
-  rooms: {
-    selected: null
-  },
-  Room: function (circle, roomInfo) { // a constructor
-    this.circle =  circle;
-    this.info = roomInfo;
-    this.baseOptions =  {strokeColor: "blue", radius: 180, strokeWeight: 4};
-    this.selectedOptions = {strokeColor: "green", radius: 180, strokeWeight: 4};
-    this.hoverOptions = {strokeColor: "red", radius: 220, strokeWeight: 7};
-    this.chatActivityOptions = {strokeColor: "red", radius: 220, strokeWeight: 7};
-    this.selected = false;  
-    this.mouseoverOpts = function() { return (this.hoverOptions); };
-    this.mouseoutOpts = function() { return (this.selected ? this.selectedOptions : this.baseOptions); };
-    this.flashOpts = function() { return (this.chatActivityOptions); };
-    this.select = function() {
-      if (geogossip.rooms.selected) 
-        geogossip.rooms.selected.unselect();
-      this.selected = true;
-      geogossip.rooms.selected = this;
-    },
-    this.unselect = function() {
-      this.selected = false;
-      console.log("This Unselecting");
-      this.circle.setOptions(this.baseOptions);
-    }
-    google.maps.event.addListener(circle, 'mouseover', function(x) {
-      return function() {
-        return x.circle.setOptions(x.mouseoverOpts());
-      }
-    }(this));
-    google.maps.event.addListener(circle, 'mouseout', function(x) {
-      return function() {
-        x.circle.setOptions(x.mouseoutOpts());
-      }
-    }(this));
-
-    google.maps.event.addListener(circle, 'click', function(x) {
-      return function() {
-        console.log("Room clicked: "+ x.info.roomId); 
-        x.select();
-        // geogossip.ws.send( )
-        // /enter "+roomInfo.room_id );
-      };
-    }(this));
-  },
-  map: {
-    circle: {
-      drawOptions: function(center) {
-        return {strokeColor: "blue", strokeOpacity: 0.6, strokeWeight: 4, fillColor: "#FFFFFF", fillOpacity: 0.1, map: map, center: center, radius: 180};
-      }
-    },
-  },
   serverEvents: {
     UpdatedRoom: function(data) {
       var r = data.room;
@@ -195,7 +143,7 @@ var layer;
 function createMap() {
   
   var latLng = new google.maps.LatLng(42.36, -71.08);
-  var myOptions = { center: latLng, zoom: 12, mapTypeId: google.maps.MapTypeId.ROADMAP };
+  var myOptions = { center: latLng, zoom: 13, mapTypeId: google.maps.MapTypeId.ROADMAP };
   map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
   google.maps.event.addListener(map, 'click', function(event) { 
     geogossip.tellServer( {type: 'CreateRoom', lat: event.latLng.lat(), lng: event.latLng.lng()} );
