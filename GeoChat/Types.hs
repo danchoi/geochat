@@ -15,21 +15,22 @@ instance ToJSON (WS.Sink a) where
     toJSON _ = toJSON ()   
 
 type LatLng = (Double, Double)
+type Client' = (ClientId, Nickname)  
+type RoomId = Int
+type ClientId = Int
 
 data Room = Room { roomId :: Int 
                  , latLng :: LatLng 
                  , numParticipants :: Int
+                 , clients :: [Client']
                  } deriving (Generic, Show)
 
 instance ToJSON Room
 
-type RoomId = Int
-type ClientId = Int
 type Nickname = Text
 
 data Client = Client { clientId :: Int 
                      , nickName :: Text  -- anon by default
-                     , clientLatLng :: Maybe LatLng
                      , clientRoomId :: Maybe Int
                      } deriving (Generic, Show)
 
@@ -45,8 +46,7 @@ data MessageFromClient = ListActiveRooms
                        | Leave deriving (Show)
 
 data MessageFromServer = Handshake ClientId
-                       | UpdatedClient Client
-                       | UpdatedRoom Room Text
+                       | UpdatedRoom Room Text 
                        | Broadcast Client RoomId Text 
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)

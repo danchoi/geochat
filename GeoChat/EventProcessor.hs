@@ -5,10 +5,12 @@ module GeoChat.EventProcessor where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Control.Monad (forM_, liftM)
+import Control.Monad (forM_, liftM, forM)
 import GeoChat.Types
 import Database.PostgreSQL.Simple
 import Data.Time.Clock
+import Data.Maybe (fromJust)
+import Data.List (nubBy)
 
 connectInfo :: ConnectInfo
 connectInfo = defaultConnectInfo { connectDatabase = "geochat"
@@ -22,7 +24,6 @@ createClient conn = do
     xs@(x:_) :: [(Int, Text)] <- query_ conn q 
     return (Client { clientId = (fst x)
                    , nickName = "anon"
-                   , clientLatLng = Nothing
                    , clientRoomId = Nothing
                    }) 
 
@@ -33,13 +34,19 @@ refreshClient conn client = do
     let latLng = case (mlat,mlng) of 
                    (Just lat, Just lng) -> Just (lat, lng)
                    otherwise -> Nothing
-    return (client {nickName = nickname, clientLatLng = latLng, clientRoomId = mrid})
+    return (client {nickName = nickname, clientRoomId = mrid})
 
 findRoom :: Connection -> RoomId -> IO Room
 findRoom conn rid = do
-    let q = "select max(rooms.lat), max(rooms.lng), count(clients.client_id) from rooms left outer join clients using (room_id) where room_id = ?"
-    ((lat, lng, count):_) :: [(Double, Double, Int)] <- query conn q (Only rid)
-    return (Room {roomId = rid, latLng = (lat, lng), numParticipants = count})
+    let q = "select rooms.lat, rooms.lng from rooms where room_id = ?"
+    xs@((lat, lng):_) :: [(Double, Double)] <- query conn q (Only rid)
+    let q2 = "select client_id, nickname from clients where room_id = ?"
+    clients :: [(Int, Text)]  <- query conn q2 (Only rid)
+    return (Room { roomId = rid
+                 , latLng = (lat, lng)
+                 , numParticipants = (length clients)
+                 , clients = clients
+                 })
 
 refreshRoom :: Connection -> Room -> IO Room
 refreshRoom conn room = findRoom conn (roomId room)
@@ -47,23 +54,23 @@ refreshRoom conn room = findRoom conn (roomId room)
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
 processMsg conn _ ListActiveRooms = do
-  let q = "select room_id, max(rooms.lat), max(rooms.lng), count(*) from rooms inner join clients using(room_id) group by room_id" 
-  xs <- query_ conn q
-  let r = map (\(a, b, c, d) -> UpdatedRoom (Room { roomId = a, latLng = (b, c), numParticipants = d }) "initialize" ) xs 
-  return r
-
-processMsg conn client (LocationUpdated (lat, lng)) = do
-  let q = "update clients set lat = ?, lng = ? where client_id = ?" 
-  execute conn q (lat, lng, clientId client)
-  r <- liftM UpdatedClient $ refreshClient conn client
-  return [r]
+  -- TODO scope by geo
+  let q = "select rooms.room_id from rooms \
+        \inner join clients using (room_id) group by rooms.room_id order by rooms.created desc limit 20"
+  xs :: [Only Int] <- query_ conn q 
+  forM xs (\x -> do 
+    room <- findRoom conn (fromOnly x) 
+    return $ UpdatedRoom room "init")
 
 processMsg conn client (ChangeNickname newname) = do
   let q = "update clients set nickname = ? where client_id = ?" 
   execute conn q (newname, clientId client)
   client' <- refreshClient conn client
-  r <- liftM UpdatedClient $ refreshClient conn client'
-  return [r]
+  case (clientRoomId client') of
+      Nothing -> return []
+      Just (rid) -> do
+        r <- liftM UpdatedRoom $ findRoom conn rid
+        return [r "changed nickname"]
 
 -- TODO if close to existing live room, Join that room
 processMsg conn client (CreateRoom (lat, lng)) = do
@@ -94,15 +101,13 @@ processMsg conn client (JoinRoom rid) = do
           True -> return [] -- no-op
           False -> do
             execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-            c <- liftM UpdatedClient $ refreshClient conn client
             rleft <- liftM UpdatedRoom $ findRoom conn oldRid 
             rjoined <- liftM UpdatedRoom $ findRoom conn rid
-            return [rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined", c]
+            return [rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined"]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-        c<- liftM UpdatedClient $ refreshClient conn client
         r <- liftM UpdatedRoom $ findRoom conn rid
-        return [r $ roomMessage client' "joined", c]
+        return [r $ roomMessage client' "joined"]
 
 processMsg conn client Leave = do
   client' <- refreshClient conn client
