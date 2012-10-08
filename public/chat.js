@@ -51,7 +51,6 @@ var ServerEvents = {
   }
 }
 
-
 $(document).ready(function() {
   var webSocketURL = 'ws://localhost:9160/ws'; 
   createMap();

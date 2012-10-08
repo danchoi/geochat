@@ -32,20 +32,16 @@ import qualified Snap.Internal.Http.Types as Snap
 import qualified Snap.Types.Headers as Headers
 import Data.List (foldl')
 import qualified Data.Text.Encoding as TE
-import Data.Monoid
 
 simpleConfig :: Config m a
 simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
-    base = [hostName, accessLog, errorLog, locale, port, ip, cert, key, compr, verbose]
+    base = [hostName, accessLog, errorLog, locale, port, ip, verbose]
     hostName = setHostname (bsFromString "localhost")
     accessLog = setAccessLog (ConfigFileLog "log/access.log")
     errorLog = setErrorLog (ConfigFileLog "log/error.log")
     locale = setLocale "US"
-    port = setSSLPort 9160
-    ip = setSSLBind (bsFromString "127.0.0.1")
-    cert = setSSLCert "server.crt"
-    key = setSSLKey "server.key"
-    compr = setCompression True
+    port = setPort 9160
+    ip = setBind (bsFromString "127.0.0.1")
     verbose = setVerbose True
     bsFromString = TE.encodeUtf8 . T.pack
 
@@ -53,12 +49,18 @@ simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
 main :: IO ()
 main = do
     state <- newMVar newServerState
-    httpServe (setPort 9160 mempty) $ site state
+    -- httpServe simpleConfig $ site state  -- run with snap
+    WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
 
 site :: MVar ServerState -> Snap ()
 site state = ifTop (writeBS "hello") <|> 
-    route [ ("ws", runWebSocketsSnap $ application state) ] <|>
+    route [ ("ws", runWSSnap state) ] <|>
     dir "static" (serveDirectory "public")
+
+runWSSnap :: MVar ServerState -> Snap ()
+runWSSnap state = do 
+  setTimeout 1
+  runWebSocketsSnap $ application state
 
 type ClientSink = (ClientId, WS.Sink WS.Hybi00)
 
