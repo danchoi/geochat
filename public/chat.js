@@ -59,6 +59,10 @@ var geogossip = {
           roomsMap[r.roomId] == r;
       }
       window.overlay.draw();
+    },
+    Broadcast: function(data) {
+      var roomId = data.roomId;
+      d3.select(".rooms #room-"+roomId+" circle").style("fill", "blue").transition().style("fill", "red");
     }
   }
 };
@@ -180,7 +184,8 @@ function createMap() {
           .each(transform) // update existing markers
         .enter().append("svg:svg")
           .each(transform)
-          .attr("class", "marker");
+          .attr("class", "marker")
+          .attr("id", function(d,i) { return ("room-" + d.value.roomId) });
 
       // Add a circle.
       marker.append("svg:circle")
@@ -189,6 +194,7 @@ function createMap() {
           .attr("cy", 25)
           .on("mouseover", function(d, i) { d3.select(this).style("fill", "yellow")})
           .on("mouseout", function(d, i) { d3.select(this).style("fill", "red")});
+
 
       // Add a label.
       marker.append("svg:text")
