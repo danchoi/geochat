@@ -1,5 +1,4 @@
-html { height: 100% 
-	}
+html { height: 100% }
 	
 body { 
   font-family: Verdana, Arial;
@@ -163,14 +162,19 @@ span.user {
 }
 
 .rooms svg {
-  width:50px;
+  width:150px;
   height:50px;
   padding-right: 100px;
   font: 10px sans-serif;
 }
 
-.rooms circle {
+.rooms .marker circle {
   fill: red;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+.rooms .client circle {
+  fill: green ;
   stroke: black;
   stroke-width: 1.5px;
 }
