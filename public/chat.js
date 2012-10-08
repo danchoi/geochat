@@ -12,6 +12,7 @@ var geogossip = {
   },
   serverEvents: {
     UpdatedClient: function(data) {
+      return; // STUB Geolocation is not accurate enough
       var c = data.client;
       var j = -1;
       for (var i = 0; i < clients.length; i++) {
