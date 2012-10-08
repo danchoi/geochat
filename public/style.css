@@ -173,6 +173,9 @@ span.user {
   stroke: black;
   stroke-width: 1.5px;
 }
+.rooms .marker text {
+  color: white;
+}
 .rooms .client circle {
   fill: green ;
   stroke: black;

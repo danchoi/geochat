@@ -180,10 +180,6 @@ function createMap() {
 
       var marker = layer.selectAll(".rooms .marker")
           .data(d3.entries(rooms))
-          .on("mouseover", function(d, i) { 
-            // console.log("mouseover on " + d.value.roomId) ;
-            // geogossip.tellServer({type: 'JoinRoom', roomId: d.value.roomId});
-          })
           .each(transform) // update existing markers
         .enter().append("svg:svg")
           .each(transform)
@@ -191,13 +187,15 @@ function createMap() {
 
       // Add a circle.
       marker.append("svg:circle")
-          .attr("r", 8.5)
+          .attr("r", 14.5)
           .attr("cx", 25)
-          .attr("cy", 25);
+          .attr("cy", 25)
+          .on("mouseover", function(d, i) { d3.select(this).style("fill", "yellow")})
+          .on("mouseout", function(d, i) { d3.select(this).style("fill", "red")});
 
       // Add a label.
       marker.append("svg:text")
-          .attr("x", 33)
+          .attr("x", 22)
           .attr("dy", 28)
           .text(function(d) { return d.value.numParticipants; });
 
@@ -209,6 +207,7 @@ function createMap() {
             .style("top", (d2.y-25) + "px");
       }
 
+      /*
       console.log("updating clients "+JSON.stringify(clients));
       var client = layer.selectAll(".rooms .client")
           .data(d3.entries(clients))
@@ -224,7 +223,6 @@ function createMap() {
           .attr("x", 33)
           .attr("dy", 28)
           .text(function(d) { return d.value.nickName; });
-
       function transform2(d) {
         d1 = new google.maps.LatLng(d.value.clientLatLng[0], d.value.clientLatLng[1]);
         d2 = projection.fromLatLngToDivPixel(d1);
@@ -232,12 +230,13 @@ function createMap() {
             .style("left", (d2.x-25) + "px")
             .style("top", (d2.y-25) + "px");
       }
-
+      */
 
     };
   }
 
   if(navigator.geolocation) {
+    return; // STUB THIS OUT
     navigator.geolocation.getCurrentPosition(function(pos) {
       geogossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
       geogossip.tellServer({type: 'LocationUpdated', lat: pos.coords.latitude, lng: pos.coords.longitude}); 
