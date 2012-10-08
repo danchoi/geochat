@@ -45,9 +45,8 @@ var ServerEvents = {
   },
   Broadcast: function(data) {
     var roomId = data.roomId;
-    d3.select(".rooms #room-"+roomId+" circle").style("fill", "blue").transition().style("fill", "red");
+    d3.select(".rooms #room-"+roomId+" circle").style("stroke", "white").transition().style("stroke", "black");
   }
-
 }
 
 
