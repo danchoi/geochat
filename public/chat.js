@@ -26,7 +26,7 @@ var ServerEvents = {
         delete roomsMap[r.roomId];
     } else if (roomsMap[r.roomId] && (roomsMap[r.roomId].numParticipants !== r.numParticipants)) {
         roomsMap[r.roomId] = r;
-        $("#room-"+r.roomId+" text").text(r.numParticipants);
+        $("#room-"+r.roomId+" text.numParticipants").text(r.numParticipants);
     } else {
         console.log("Adding room node "+r.roomId);
         rooms.push(r);
