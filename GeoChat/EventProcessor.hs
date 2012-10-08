@@ -88,12 +88,16 @@ processMsg conn client (JoinRoom rid) = do
   client' <- refreshClient conn client
   let r = clientRoomId client'
   case r of 
-    Just x -> do
-        execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-        c <- liftM UpdatedClient $ refreshClient conn client
-        rleft <- liftM UpdatedRoom $ findRoom conn x 
-        rjoined <- liftM UpdatedRoom $ findRoom conn rid
-        return [c, rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined"]
+    Just oldRid -> do
+        -- client leaves a room and joins one
+        case (oldRid == rid) of
+          True -> return []
+          False -> do
+            execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
+            c <- liftM UpdatedClient $ refreshClient conn client
+            rleft <- liftM UpdatedRoom $ findRoom conn oldRid 
+            rjoined <- liftM UpdatedRoom $ findRoom conn rid
+            return [c, rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined"]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
         c<- liftM UpdatedClient $ refreshClient conn client
