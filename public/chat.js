@@ -33,12 +33,17 @@ var ServerEvents = {
         roomsMap[r.roomId] = r;
         window.overlay.draw();
     }
+
+    if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
+        d3.selectAll(".marker").attr("class", "marker");
+        d3.select("#room-"+r.roomId).attr("class", "marker selected");
+    }
   },
   Broadcast: function(data) {
     console.log(data);
     var roomId = data.roomId;
     d3.select(".rooms #room-"+roomId+" circle").style("stroke", "white").transition().style("stroke", "black");
-    d3.select(".rooms #room-"+roomId+" text.chat").text(data.user.nickName + ": " + data.text);
+    d3.select(".rooms #room-"+roomId+" text.chat").text(data.client[1] + ": " + data.text);
   }
 }
 

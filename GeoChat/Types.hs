@@ -53,7 +53,7 @@ data RoomChange = InitRoom
 
 data MessageFromServer = Handshake ClientId
                        | UpdatedRoom Room RoomChange
-                       | Broadcast Client RoomId Text
+                       | Broadcast Client' RoomId LatLng Text
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 

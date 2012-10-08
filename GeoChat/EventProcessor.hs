@@ -130,9 +130,10 @@ processMsg conn client (PostMessage msg) = do
   let r = clientRoomId client'
   case r of 
     Just rid -> do -- client in a room 
+      r <- findRoom conn rid
       let q = "insert into messages (room_id, client_id, client_nick, content) values (?, ?, ?, ?) returning message_id, created"
       ((mid,time):_) :: [(Int, UTCTime)] <- query conn q (rid, clientId client', nickName client', msg)
-      return [Broadcast client' rid msg]
+      return [Broadcast (tupClient client') rid (latLng r) msg]
     Nothing -> do
       return []
 
