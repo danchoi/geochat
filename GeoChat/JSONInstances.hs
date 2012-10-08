@@ -14,7 +14,7 @@ import Data.Vector (fromList)
 
 instance FromJSON MessageFromClient where
   parseJSON (Object v) 
-    | Just "LocationUpdated" <- M.lookup "type" v = LocationUpdated <$> ((,) <$> v .: "lat" <*> v .: "lng")
+    | Just "MapBoundsUpdated" <- M.lookup "type" v = MapBoundsUpdated <$> ((,) <$> v .: "latSW" <*> v .: "lngSW") <*> ((,) <$> v .: "latNE" <*> v .: "lngNE")
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
     | Just "CreateRoom" <- M.lookup "type" v = CreateRoom <$> ((,) <$> v .: "lat" <*>  v .: "lng")
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 

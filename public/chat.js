@@ -1,6 +1,7 @@
 WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 var map;
+var myMapBounds;
 var myClientId;
 var rooms = [];
 var roomsMap = {}
@@ -47,6 +48,19 @@ var ServerEvents = {
   }
 }
 
+function tellservermybounds() {
+  if (websocket.readyState == 1) {
+    var bounds = map.getBounds();
+    var myMapBounds = {type: "MapBoundsUpdated", 
+                latSW:  bounds.getSouthWest().lat(),
+                lngSW:  bounds.getSouthWest().lng(),
+                latNE:  bounds.getNorthEast().lat(),
+                lngNE:  bounds.getNorthEast().lng() }
+    tellServer(myMapBounds);
+  }
+}
+
+
 $(document).ready(createMap);
 
 function startWS() {
@@ -54,6 +68,7 @@ function startWS() {
   websocket = new WebSocket(webSocketURL); 
   websocket.onopen = function(event){
     console.log("Connected to server");
+    tellservermybounds(myMapBounds);
   };
   websocket.onmessage = function(event){
     var x = JSON.parse(event.data);
@@ -116,6 +131,7 @@ function createMap() {
 
   overlay = new google.maps.OverlayView();
   overlay.setMap(map);
+  google.maps.event.addListener(map, "bounds_changed", tellservermybounds); 
   overlay.onAdd = function() {
 
     layer = d3.select(this.getPanes().overlayMouseTarget).append("div").attr("class", "rooms");

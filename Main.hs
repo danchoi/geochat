@@ -33,6 +33,8 @@ import qualified Snap.Types.Headers as Headers
 import Data.List (foldl')
 import qualified Data.Text.Encoding as TE
 
+import qualified Data.Map as M
+
 simpleConfig :: Config m a
 simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
     base = [hostName, accessLog, errorLog, locale, port, ip, verbose]
@@ -62,26 +64,27 @@ runWSSnap state = do
   setTimeout 1
   runWebSocketsSnap $ application state
 
-type ClientSink = ((ClientId, Maybe LatLng), WS.Sink WS.Hybi00)
+type Bounds = (LatLng,LatLng)
+type ClientSink = (ClientId, (Maybe Bounds, WS.Sink WS.Hybi00)) 
 
-type ServerState = [ClientSink]
+type ServerState = M.Map ClientId (Maybe Bounds, WS.Sink WS.Hybi00)
 
 newServerState :: ServerState 
-newServerState = []
+newServerState = M.empty
 
 addClientSink :: ClientSink -> ServerState -> ServerState
-addClientSink cs s = cs:s
+addClientSink cs@(cid, (_,sink)) s = M.insert cid (Nothing,sink) s
 
 removeClientSink :: ClientId -> ServerState -> ServerState
-removeClientSink cid s = filter (\((c, _), sink) -> cid /= c) $ s 
+removeClientSink cid s = M.delete cid s 
 
 broadcast :: [MessageFromServer] -> ServerState -> IO ()
-broadcast ms clients = do
-  forM_ clients $ \c -> mapM (send c) ms
+broadcast ms s = do
+  forM_ $ (M.toList s) $ \c -> mapM (send c) ms
 
 send :: ClientSink -> MessageFromServer -> IO ()
-send ((_, Just (lat,lng)), sink) m = WS.sendSink sink $ WS.textData $ encode m
-send ((cid,Nothing),_) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
+send (_, (Just bounds, sink)) m = WS.sendSink sink $ WS.textData $ encode m
+send (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
 
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
 application state rq = do
@@ -93,7 +96,7 @@ application state rq = do
     client <- liftIO $ createClient conn
     liftIO $ putStrLn $ "Created client " `mappend` (show $ clientId client) 
     liftIO $ modifyMVar_ state $ \s -> do
-        let s' = addClientSink ((clientId client, Nothing), sink) s
+        let s' = addClientSink (clientId client, (Nothing, sink)) s
         WS.sendSink sink $ WS.textData $ encode $ Handshake $ clientId client
         return s'
     rooms <- liftIO $ processMsg conn client ListActiveRooms 
@@ -105,6 +108,9 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
     rawMsg <- WS.receiveData 
     
     case (decode rawMsg :: Maybe MessageFromClient) of
+        Just (MapBoundsUpdated latLngSW latLngNE) -> do 
+            liftIO $ putStrLn $ "Updating client " ++ (show $ clientId client) ++ " SW:" ++ (show latLngSW) ++ " NE:" ++ (show latLngNE)
+
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
@@ -121,7 +127,7 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
         Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ \s -> do
             let s' = removeClientSink (clientId client) s
             putStrLn $ "Connection closed by client " ++ (show . clientId $ client)
-            putStrLn $ "Sinks left: " ++ ((show . length) s')
+            putStrLn $ "Sinks left: " ++ ((show . M.size) s')
             msgsFromServer <- liftIO $ processMsg conn client Leave
             liftIO $ broadcast msgsFromServer s'
             return s'

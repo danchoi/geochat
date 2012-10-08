@@ -36,8 +36,9 @@ data Client = Client { clientId :: Int
 
 instance ToJSON Client
 
+
 data MessageFromClient = ListActiveRooms
-                       | LocationUpdated LatLng
+                       | MapBoundsUpdated LatLng LatLng
                        | CreateRoom LatLng
                        | ChangeNickname Nickname 
                        | JoinRoom RoomId

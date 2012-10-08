@@ -137,4 +137,7 @@ processMsg conn client (PostMessage msg) = do
     Nothing -> do
       return []
 
+-- catchall
+processMsg conn client _ = return []
+
 
