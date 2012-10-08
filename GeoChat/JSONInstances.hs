@@ -26,10 +26,15 @@ instance FromJSON MessageFromClient where
 
 instance ToJSON MessageFromServer where
   toJSON (Handshake cid) = object ["type" .= ("Handshake" :: Text), "clientId" .= cid]
-  toJSON (UpdatedRoom room msg) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room, "message" .= msg]
+  toJSON (UpdatedRoom room change) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room, "change" .= change]
   toJSON (Broadcast user roomId text) = object ["type" .= ("Broadcast" :: Text), "user" .= user, "roomId" .= roomId, "text" .= text]
   toJSON (ErrorMessage text) = object ["type" .= ("ErrorMessage" :: Text), "content" .= text]
 
+instance ToJSON RoomChange where
+  toJSON (ChangedNickname c) = object ["type" .= ("ChangedNickname" :: Text), "client" .= c] 
+  toJSON InitRoom = object ["type" .= ("InitRoom" :: Text)] 
+  toJSON (EnterRoom c) = object ["type" .= ("EnterRoom" :: Text), "client" .= c] 
+  toJSON (ExitRoom c) = object ["type" .= ("ExitRoom" :: Text), "client" .= c] 
 
 {- 
 

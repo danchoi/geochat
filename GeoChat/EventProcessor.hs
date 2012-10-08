@@ -48,6 +48,10 @@ findRoom conn rid = do
                  , clients = clients
                  })
 
+-- tuple client
+tupClient :: Client -> Client'
+tupClient c = ((clientId c), (nickName c))
+
 refreshRoom :: Connection -> Room -> IO Room
 refreshRoom conn room = findRoom conn (roomId room)
 
@@ -60,7 +64,7 @@ processMsg conn _ ListActiveRooms = do
   xs :: [Only Int] <- query_ conn q 
   forM xs (\x -> do 
     room <- findRoom conn (fromOnly x) 
-    return $ UpdatedRoom room "init")
+    return $ UpdatedRoom room InitRoom)
 
 processMsg conn client (ChangeNickname newname) = do
   let q = "update clients set nickname = ? where client_id = ?" 
@@ -70,7 +74,7 @@ processMsg conn client (ChangeNickname newname) = do
       Nothing -> return []
       Just (rid) -> do
         r <- liftM UpdatedRoom $ findRoom conn rid
-        return [r "changed nickname"]
+        return [r $ ChangedNickname $ tupClient client]
 
 -- TODO if close to existing live room, Join that room
 processMsg conn client (CreateRoom (lat, lng)) = do
@@ -103,11 +107,11 @@ processMsg conn client (JoinRoom rid) = do
             execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
             rleft <- liftM UpdatedRoom $ findRoom conn oldRid 
             rjoined <- liftM UpdatedRoom $ findRoom conn rid
-            return [rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined"]
+            return [rleft $ ExitRoom (tupClient client'), rjoined $ EnterRoom (tupClient client')]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
         r <- liftM UpdatedRoom $ findRoom conn rid
-        return [r $ roomMessage client' "joined"]
+        return [r $ EnterRoom (tupClient client')]
 
 processMsg conn client Leave = do
   client' <- refreshClient conn client
@@ -116,7 +120,7 @@ processMsg conn client Leave = do
     Just x -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
       r <- liftM UpdatedRoom $ findRoom conn x
-      return $ [r $ roomMessage client' "left"]
+      return $ [r $ ExitRoom $ tupClient client']
     Nothing -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
       return $ []
@@ -132,6 +136,4 @@ processMsg conn client (PostMessage msg) = do
     Nothing -> do
       return []
 
-roomMessage :: Client -> Text -> Text
-roomMessage c message = (nickName c) `Text.append` " " `Text.append` message
 

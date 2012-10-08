@@ -34,15 +34,6 @@ var ServerEvents = {
         window.overlay.draw();
     }
   },
-  UpdatedClient: function(data) {
-    var clientId = data.client.clientId;
-    var clientRoomId = data.client.clientRoomId;
-    if (clientRoomId) {
-      console.log("update client "+clientId+" roomId"+clientRoomId);
-      d3.selectAll(".marker").attr("class", "marker");
-      d3.select("#room-"+clientRoomId).attr("class", "marker selected");
-    }
-  },
   Broadcast: function(data) {
     console.log(data);
     var roomId = data.roomId;
@@ -51,9 +42,10 @@ var ServerEvents = {
   }
 }
 
-$(document).ready(function() {
+$(document).ready(createMap);
+
+function startWS() {
   var webSocketURL = 'ws://localhost:9160/ws'; 
-  createMap();
   websocket = new WebSocket(webSocketURL); 
   websocket.onopen = function(event){
     console.log("Connected to server");
@@ -64,8 +56,12 @@ $(document).ready(function() {
       for (var i = 0, j = x.length; i < j; i++) {
         var message = x[i];
         var f = ServerEvents[message.type];
-        //console.log("ServerEvent: " + event.data);
-        if (typeof f == 'function') f(message);
+        console.log("ServerEvent: " + event.data);
+        if (typeof f == 'function') { 
+          f(message) 
+        } else { 
+          console.log("Unrecognized event: "+event.data);
+        }
       }
     } else if (x['type'] === 'Handshake') {
         console.log("Handshake: " + event.data);
@@ -79,10 +75,6 @@ $(document).ready(function() {
     $("#chatStream").append('<br>Connection closed');
   };
  
-
-
-  // chat room widget 
-
   $("form#chat_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#message");
@@ -96,7 +88,7 @@ $(document).ready(function() {
     tellServer({type: 'ChangeNickname', nickname: textfield.val()});
   });
 
-});
+};
 
 
 
@@ -161,6 +153,7 @@ function createMap() {
             .style("top", (d2.y-25) + "px");
       }
     };
+    startWS();
   }
 
 }

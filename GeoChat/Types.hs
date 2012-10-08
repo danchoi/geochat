@@ -45,9 +45,15 @@ data MessageFromClient = ListActiveRooms
                        | PostMessage Text 
                        | Leave deriving (Show)
 
+data RoomChange = InitRoom
+                | ChangedNickname Client' 
+                | EnterRoom Client' 
+                | ExitRoom Client' deriving (Show)
+
+
 data MessageFromServer = Handshake ClientId
-                       | UpdatedRoom Room Text 
-                       | Broadcast Client RoomId Text 
+                       | UpdatedRoom Room RoomChange
+                       | Broadcast Client RoomId Text
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 
