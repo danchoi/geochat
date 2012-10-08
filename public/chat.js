@@ -166,17 +166,9 @@ function createMap() {
       marker.append("svg:circle")
           .attr("r", 14.5)
           .attr("cx", 25)
-          .attr("cy", 25)
+          .attr("cy", 25);
           //.on("mouseover", function(d, i) { d3.select(this).style("fill", "yellow")})
           //.on("mouseout", function(d, i) { d3.select(this).style("fill", "red")})
-          .on("click", function(d, i) { 
-            console.log("click "+d.value.roomId);
-            //d3.select(this).style("fill", "yellow");
-            d3.select("#room-"+d.value.roomId).attr("class", "selected");
-            
-
-          });
-
 
       // Add a label.
       marker.append("svg:text")
