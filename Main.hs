@@ -77,7 +77,11 @@ removeClientSink cid s = filter (\((c, _), sink) -> cid /= c) $ s
 
 broadcast :: [MessageFromServer] -> ServerState -> IO ()
 broadcast ms clients = do
-  forM_ clients $ \(_, clientSink) -> WS.sendSink clientSink $ WS.textData $ encode ms
+  forM_ clients $ \c -> mapM (send c) ms
+
+send :: ClientSink -> MessageFromServer -> IO ()
+send ((_, Just (lat,lng)), sink) m = WS.sendSink sink $ WS.textData $ encode m
+send ((cid,Nothing),_) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
 
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
 application state rq = do
