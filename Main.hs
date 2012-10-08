@@ -62,7 +62,7 @@ runWSSnap state = do
   setTimeout 1
   runWebSocketsSnap $ application state
 
-type ClientSink = (ClientId, WS.Sink WS.Hybi00)
+type ClientSink = ((ClientId, Maybe LatLng), WS.Sink WS.Hybi00)
 
 type ServerState = [ClientSink]
 
@@ -73,7 +73,7 @@ addClientSink :: ClientSink -> ServerState -> ServerState
 addClientSink cs s = cs:s
 
 removeClientSink :: ClientId -> ServerState -> ServerState
-removeClientSink cid s = filter ((/= cid) . fst) $ s 
+removeClientSink cid s = filter (\((c, _), sink) -> cid /= c) $ s 
 
 broadcast :: [MessageFromServer] -> ServerState -> IO ()
 broadcast ms clients = do
@@ -89,9 +89,8 @@ application state rq = do
     client <- liftIO $ createClient conn
     liftIO $ putStrLn $ "Created client " `mappend` (show $ clientId client) 
     liftIO $ modifyMVar_ state $ \s -> do
-        let s' = addClientSink ((clientId client), sink) s
+        let s' = addClientSink ((clientId client, Nothing), sink) s
         WS.sendSink sink $ WS.textData $ encode $ Handshake $ clientId client
-        --- broadcast a joined message
         return s'
     rooms <- liftIO $ processMsg conn client ListActiveRooms 
     WS.sendTextData $ encode rooms 
