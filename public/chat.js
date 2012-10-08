@@ -53,7 +53,8 @@ var ServerEvents = {
 
 
 $(document).ready(function() {
-  var webSocketURL = 'ws://localhost:9160'; // : 'ws://poddb.com:9394';
+  //var webSocketURL = 'ws://localhost:9160'; // : 'ws://poddb.com:9394';
+  var webSocketURL = 'ws://localhost:9160/ws'; // : 'ws://poddb.com:9394';
   createMap();
   websocket = new WebSocket(webSocketURL); 
   websocket.onopen = function(event){

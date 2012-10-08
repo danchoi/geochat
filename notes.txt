@@ -29,3 +29,7 @@ install postgis
  2014  psql -d geochat -f postgis_comments.sql 
 
 
+
+------------------------------------------------------------------------
+
+

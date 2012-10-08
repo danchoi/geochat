@@ -20,6 +20,46 @@ import Data.Aeson
 import Data.Text.Lazy.Encoding as E
 import Database.PostgreSQL.Simple (Connection)
 
+import Snap.Core
+import Control.Applicative
+
+import Snap.Http.Server.Config
+import Snap.Http.Server 
+import Snap.Util.FileServe
+import Network.WebSockets.Snap
+import qualified Snap.Core as Snap
+import qualified Snap.Internal.Http.Types as Snap
+import qualified Snap.Types.Headers as Headers
+import Data.List (foldl')
+import qualified Data.Text.Encoding as TE
+import Data.Monoid
+
+simpleConfig :: Config m a
+simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
+    base = [hostName, accessLog, errorLog, locale, port, ip, cert, key, compr, verbose]
+    hostName = setHostname (bsFromString "localhost")
+    accessLog = setAccessLog (ConfigFileLog "log/access.log")
+    errorLog = setErrorLog (ConfigFileLog "log/error.log")
+    locale = setLocale "US"
+    port = setSSLPort 9160
+    ip = setSSLBind (bsFromString "127.0.0.1")
+    cert = setSSLCert "server.crt"
+    key = setSSLKey "server.key"
+    compr = setCompression True
+    verbose = setVerbose True
+    bsFromString = TE.encodeUtf8 . T.pack
+
+
+main :: IO ()
+main = do
+    state <- newMVar newServerState
+    httpServe (setPort 9160 mempty) $ site state
+
+site :: MVar ServerState -> Snap ()
+site state = ifTop (writeBS "hello") <|> 
+    route [ ("ws", runWebSocketsSnap $ application state) ] <|>
+    dir "static" (serveDirectory "public")
+
 type ClientSink = (ClientId, WS.Sink WS.Hybi00)
 
 type ServerState = [ClientSink]
@@ -36,11 +76,6 @@ removeClientSink cid s = filter ((/= cid) . fst) $ s
 broadcast :: [MessageFromServer] -> ServerState -> IO ()
 broadcast ms clients = do
   forM_ clients $ \(_, clientSink) -> WS.sendSink clientSink $ WS.textData $ encode ms
-
-main :: IO ()
-main = do
-    state <- newMVar newServerState
-    WS.runServer "0.0.0.0" 9160 $ application state
 
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
 application state rq = do
