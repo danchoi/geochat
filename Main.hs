@@ -68,6 +68,7 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
+            liftIO $ putStrLn $ "Sending MessageFromServer: " `mappend` (show msgsFromServer)
             liftIO $ readMVar state >>= broadcast msgsFromServer
             return ()
         Nothing -> do 

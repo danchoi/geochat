@@ -91,7 +91,7 @@ processMsg conn client (JoinRoom rid) = do
     Just oldRid -> do
         -- client leaves a room and joins one
         case (oldRid == rid) of
-          True -> return []
+          True -> return [] -- no-op
           False -> do
             execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
             c <- liftM UpdatedClient $ refreshClient conn client
