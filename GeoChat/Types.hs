@@ -46,7 +46,7 @@ data MessageFromClient = ListActiveRooms
 
 data MessageFromServer = UpdatedClient Client
                        | UpdatedRoom Room Text
-                       | Broadcast Client Room Text 
+                       | Broadcast Client RoomId Text 
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 

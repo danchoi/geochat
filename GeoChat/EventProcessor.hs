@@ -8,6 +8,7 @@ import qualified Data.Text as Text
 import Control.Monad (forM_, liftM)
 import GeoChat.Types
 import Database.PostgreSQL.Simple
+import Data.Time.Clock
 
 connectInfo :: ConnectInfo
 connectInfo = defaultConnectInfo { connectDatabase = "geochat"
@@ -111,8 +112,16 @@ processMsg conn client Leave = do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
       return $ []
 
-
-processMsg conn client (PostMessage msg) = undefined
+processMsg conn client (PostMessage msg) = do
+  client' <- refreshClient conn client
+  let r = clientRoomId client'
+  case r of 
+    Just rid -> do -- client in a room 
+      let q = "insert into messages (room_id, client_id, client_nick, content) values (?, ?, ?, ?) returning message_id, created"
+      ((mid,time):_) :: [(Int, UTCTime)] <- query conn q (rid, clientId client', nickName client', msg)
+      return [Broadcast client' rid msg]
+    Nothing -> do
+      return []
 
 roomMessage :: Client -> Text -> Text
 roomMessage c message = (nickName c) `Text.append` " " `Text.append` message

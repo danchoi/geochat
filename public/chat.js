@@ -2,7 +2,9 @@ WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 var map;
 var rooms = [];
+var roomsMap = {}
 var clients = [];
+var clientsMap = {}
 
 var geogossip = {
   ws: null,
@@ -42,16 +44,19 @@ var geogossip = {
       }
       if (j > -1 && r.numParticipants == 0) {
           rooms.splice(j,1); 
+          delete roomsMap[r.roomId];
           layer.selectAll("svg.marker").data(rooms).exit().remove();
       } else if (j > -1 && rooms[j].numParticipants != r.numParticipants) {
           rooms.splice(j,1); 
           layer.selectAll("svg.marker").data(rooms).exit().remove();
           rooms.push(r);
+          roomsMap[r.roomId] == r;
           layer.selectAll("svg.marker").data(rooms).enter();
       } else if (j > -1  && rooms[j].numParticipants == r.numParticipants) {
           return;
       } else {
           rooms.push(r);
+          roomsMap[r.roomId] == r;
       }
       window.overlay.draw();
     }
@@ -130,6 +135,7 @@ $(document).ready(function() {
   $("form#chat_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#message");
+    geogossip.tellServer({type: 'PostMessage', content: textfield.val()});
     textfield.val("");
   });
 
@@ -138,15 +144,6 @@ $(document).ready(function() {
     var textfield = $("#nickname");
     geogossip.tellServer({type: 'ChangeNickname', nickname: textfield.val()});
   });
-
-  $("#create_stream").click(function(e) {
-    if (geogossip.currentLocation) {
-      var msg = "/create_room  new_room "+geogossip.currentLocation.lat()+" "+geoGossip.currentLocation.lng();
-      console.log(msg);
-      geogossip.ws.send(msg);
-    }
-  });
-
 
 });
 
