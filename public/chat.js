@@ -203,32 +203,6 @@ function createMap() {
             .style("left", (d2.x-25) + "px")
             .style("top", (d2.y-25) + "px");
       }
-
-      /*
-      console.log("updating clients "+JSON.stringify(clients));
-      var client = layer.selectAll(".rooms .client")
-          .data(d3.entries(clients))
-          .each(transform2) 
-        .enter().append("svg:svg")
-          .each(transform2)
-          .attr("class", "client");
-      client.append("svg:circle")
-          .attr("r", 4.5)
-          .attr("cx", 25)
-          .attr("cy", 25);
-      client.append("svg:text")
-          .attr("x", 33)
-          .attr("dy", 28)
-          .text(function(d) { return d.value.nickName; });
-      function transform2(d) {
-        d1 = new google.maps.LatLng(d.value.clientLatLng[0], d.value.clientLatLng[1]);
-        d2 = projection.fromLatLngToDivPixel(d1);
-        return d3.select(this)
-            .style("left", (d2.x-25) + "px")
-            .style("top", (d2.y-25) + "px");
-      }
-      */
-
     };
   }
 
