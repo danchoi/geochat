@@ -53,7 +53,7 @@ application state rq = do
     liftIO $ putStrLn $ "Created client " `mappend` (show $ clientId client) 
     liftIO $ modifyMVar_ state $ \s -> do
         let s' = addClientSink ((clientId client), sink) s
-        WS.sendSink sink $ WS.textData $ "Welcome client " `mappend` (T.pack . show $ clientId client)
+        WS.sendSink sink $ WS.textData $ encode $ Handshake $ clientId client
         --- broadcast a joined message
         return s'
     rooms <- liftIO $ processMsg conn client ListActiveRooms 

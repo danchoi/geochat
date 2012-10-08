@@ -173,7 +173,8 @@ span.user {
   stroke: black;
   stroke-width: 1.5px;
 }
-.selected circle {
+.rooms .selected circle {
+
   fill: blue;
 }
 .rooms .marker text {

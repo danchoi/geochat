@@ -25,6 +25,7 @@ instance FromJSON MessageFromClient where
 
 
 instance ToJSON MessageFromServer where
+  toJSON (Handshake cid) = object ["type" .= ("Handshake" :: Text), "clientId" .= cid]
   toJSON (UpdatedClient c) = object ["type" .= ("UpdatedClient" :: Text), "client" .= c]
   toJSON (UpdatedRoom room msg) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room, "message" .= msg]
   toJSON (Broadcast user roomId text) = object ["type" .= ("Broadcast" :: Text), "user" .= user, "roomId" .= roomId, "text" .= text]

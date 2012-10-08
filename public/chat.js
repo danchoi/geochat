@@ -1,109 +1,81 @@
 WEB_SOCKET_SWF_LOCATION = "websocket_js/WebSocketMain.swf";
 
 var map;
+var myClientId;
 var rooms = [];
 var roomsMap = {}
 var clients = [];
 var clientsMap = {}
-
-var geogossip = {
-  ws: null,
-  currentLocation: null,
-  tellServer: function (data) {
-    geogossip.ws.send(JSON.stringify(data));
-  },
-  serverEvents: {
-    UpdatedRoom: function(data) {
-      var r = data.room;
-      if (r.numParticipants === 0) {
-          console.log("Remove room "+r.roomId);
-          for (var i = 0, j = rooms.length; i < j; i++) {
-            if (rooms[i].roomId === r.roomId) {
-              rooms.splice(i,1);
-              break;
-            }
-          }
-          $("#room-"+r.roomId).remove();
-          delete roomsMap[r.roomId];
-      } else if (roomsMap[r.roomId] && (roomsMap[r.roomId].numParticipants != r.numParticipants)) {
-          roomsMap[r.roomId] = r;
-          var x = d3.select("#room-"+r.roomId).__data__.value.numParticipants;
-          console.log("current "+x);
-      } else {
-          rooms.push(r);
-          roomsMap[r.roomId] == r;
-          window.overlay.draw();
-      }
-    },
-    Broadcast: function(data) {
-      var roomId = data.roomId;
-      d3.select(".rooms #room-"+roomId+" circle").style("fill", "blue").transition().style("fill", "red");
-    }
-  }
+var websocket;
+var tellServer = function (data) {
+  websocket.send(JSON.stringify(data));
 };
 
-
-
-
-
-// see beget: From p. 22 of JavaScript the Good Parts
-
-var geoRoomPrototype = {
-  toString: function() {
-    console.log("Room ID: "+this.room_id);
+var ServerEvents = {
+  UpdatedRoom: function(data) {
+    var r = data.room;
+    if (r.numParticipants === 0) {
+        console.log("Remove room "+r.roomId);
+        for (var i = 0, j = rooms.length; i < j; i++) {
+          if (rooms[i].roomId === r.roomId) {
+            rooms.splice(i,1);
+            break;
+          }
+        }
+        $("#room-"+r.roomId).remove();
+        delete roomsMap[r.roomId];
+    } else if (roomsMap[r.roomId] && (roomsMap[r.roomId].numParticipants !== r.numParticipants)) {
+        roomsMap[r.roomId] = r;
+        $("#room-"+r.roomId+" text").text(r.numParticipants);
+    } else {
+        console.log("Adding room node "+r.roomId);
+        rooms.push(r);
+        roomsMap[r.roomId] = r;
+        window.overlay.draw();
+    }
+  },
+  UpdatedClient: function(data) {
+    var clientId = data.client.clientId;
+    var clientRoomId = data.client.clientRoomId;
+    if (clientRoomId) {
+      console.log("update client "+clientId+" roomId"+clientRoomId);
+      d3.selectAll(".marker").attr("class", "marker");
+      d3.select("#room-"+clientRoomId).attr("class", "marker selected");
+    }
+  },
+  Broadcast: function(data) {
+    var roomId = data.roomId;
+    d3.select(".rooms #room-"+roomId+" circle").style("fill", "blue").transition().style("fill", "red");
   }
+
 }
 
-var messagePrototype  = {
-  toString: function() {
-    console.log("Message: TEST toString");
-  }
-}
-
-function getURLParameter(name) {
-  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
-}
 
 $(document).ready(function() {
   var webSocketURL = 'ws://localhost:9160'; // : 'ws://poddb.com:9394';
   createMap();
-  geogossip.ws = new WebSocket(webSocketURL); 
-  geogossip.ws.onopen = function(event){
+  websocket = new WebSocket(webSocketURL); 
+  websocket.onopen = function(event){
     console.log("Connected to server");
   };
-
-  geogossip.ws.onmessage = function(event){
-    if (event.data.length > 0 && event.data[0] == '[') {
-      var x  = JSON.parse(event.data);
-      var messages = JSON.parse(event.data);
-      for (var i = 0; i < messages.length; i++) {
-        var message = messages[i];
-        var f = geogossip.serverEvents[message.type];
-        console.log("server: " + JSON.stringify(message));
-        if (typeof f == 'function') {
-          f(message);
-        }
+  websocket.onmessage = function(event){
+    var x = JSON.parse(event.data);
+    if (Object.prototype.toString.call( x) === '[object Array]') {
+      for (var i = 0, j = x.length; i < j; i++) {
+        var message = x[i];
+        var f = ServerEvents[message.type];
+        //console.log("ServerEvent: " + event.data);
+        if (typeof f == 'function') f(message);
       }
-
-      return;
-
+    } else if (x['type'] === 'Handshake') {
+        console.log("Handshake: " + event.data);
+        myClientId = x['clientId'];
     } else {  // receive a chat message 
-        var message = event.data;
-        message.prototype = messagePrototype;
-        console.log(message.toString());
-        $('#chatStream').append(ich.message(message));
-        var liveRoomId = message.room_id;
-        if (liveRoomId ) {
-          x = roomCircles[liveRoomId];
-          x.setOptions(geogossip.map.circle.chatActivityOptions);
-          setTimeout( function() { x.setOptions(geogossip.map.circle.baseOptions); }, 100); 
-        }
-        $('#chatStream').animate({scrollTop: $('#chatStream').height()});
-
+      console.log("Unparseable message: "+event.data);
     }
   };
   
-  geogossip.ws.onclose = function(event){
+  websocket.onclose = function(event){
     $("#chatStream").append('<br>Connection closed');
   };
  
@@ -114,14 +86,14 @@ $(document).ready(function() {
   $("form#chat_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#message");
-    geogossip.tellServer({type: 'PostMessage', content: textfield.val()});
+    tellServer({type: 'PostMessage', content: textfield.val()});
     textfield.val("");
   });
 
   $("form#nick_form").submit(function(e){
     e.preventDefault();
     var textfield = $("#nickname");
-    geogossip.tellServer({type: 'ChangeNickname', nickname: textfield.val()});
+    tellServer({type: 'ChangeNickname', nickname: textfield.val()});
   });
 
 });
@@ -142,7 +114,7 @@ function createMap() {
   var myOptions = { center: latLng, zoom: 13, mapTypeId: google.maps.MapTypeId.ROADMAP };
   map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
   google.maps.event.addListener(map, 'click', function(event) { 
-    geogossip.tellServer( {type: 'CreateRoom', lat: event.latLng.lat(), lng: event.latLng.lng()} );
+    tellServer( {type: 'CreateRoom', lat: event.latLng.lat(), lng: event.latLng.lng()} );
   });
 
   overlay = new google.maps.OverlayView();
@@ -186,13 +158,5 @@ function createMap() {
     };
   }
 
-  if(navigator.geolocation) {
-    return; // STUB THIS OUT
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      geogossip.currentLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
-      geogossip.tellServer({type: 'LocationUpdated', lat: pos.coords.latitude, lng: pos.coords.longitude}); 
-      $("#create_chat").show();
-    }, function() { /* No geolocation */ });
-  }
 }
 
