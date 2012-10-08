@@ -13,52 +13,27 @@ var geogossip = {
     geogossip.ws.send(JSON.stringify(data));
   },
   serverEvents: {
-    UpdatedClient: function(data) {
-      return; // STUB Geolocation is not accurate enough
-      var c = data.client;
-      var j = -1;
-      for (var i = 0; i < clients.length; i++) {
-        if (clients[i].roomId == c.roomId) {
-            j = i; 
-            break;
-        }
-      }
-      if (j > -1) {
-          clients.splice(j, 1); 
-          layer.selectAll("svg.client").data(clients).exit().remove();
-          clients.push(c); 
-          layer.selectAll("svg.client").data(clients).enter();
-      } else {
-        clients.push(c);
-      }
-      window.overlay.draw();
-    },
     UpdatedRoom: function(data) {
       var r = data.room;
-      var j = -1;
-      for (var i = 0; i < rooms.length; i++) {
-        if (rooms[i].roomId === r.roomId) {
-            j = i; // room exists at j
-            break;
-        }
-      }
-      if (j > -1 && r.numParticipants == 0) {
-          rooms.splice(j,1); 
+      if (r.numParticipants === 0) {
+          console.log("Remove room "+r.roomId);
+          for (var i = 0, j = rooms.length; i < j; i++) {
+            if (rooms[i].roomId === r.roomId) {
+              rooms.splice(i,1);
+              break;
+            }
+          }
+          $("#room-"+r.roomId).remove();
           delete roomsMap[r.roomId];
-          layer.selectAll("svg.marker").data(rooms).exit().remove();
-      } else if (j > -1 && rooms[j].numParticipants != r.numParticipants) {
-          rooms.splice(j,1); 
-          layer.selectAll("svg.marker").data(rooms).exit().remove();
-          rooms.push(r);
-          roomsMap[r.roomId] == r;
-          layer.selectAll("svg.marker").data(rooms).enter();
-      } else if (j > -1  && rooms[j].numParticipants == r.numParticipants) {
-          return;
+      } else if (roomsMap[r.roomId] && (roomsMap[r.roomId].numParticipants != r.numParticipants)) {
+          roomsMap[r.roomId] = r;
+          var x = d3.select("#room-"+r.roomId).__data__.value.numParticipants;
+          console.log("current "+x);
       } else {
           rooms.push(r);
           roomsMap[r.roomId] == r;
+          window.overlay.draw();
       }
-      window.overlay.draw();
     },
     Broadcast: function(data) {
       var roomId = data.roomId;
@@ -192,8 +167,15 @@ function createMap() {
           .attr("r", 14.5)
           .attr("cx", 25)
           .attr("cy", 25)
-          .on("mouseover", function(d, i) { d3.select(this).style("fill", "yellow")})
-          .on("mouseout", function(d, i) { d3.select(this).style("fill", "red")});
+          //.on("mouseover", function(d, i) { d3.select(this).style("fill", "yellow")})
+          //.on("mouseout", function(d, i) { d3.select(this).style("fill", "red")})
+          .on("click", function(d, i) { 
+            console.log("click "+d.value.roomId);
+            //d3.select(this).style("fill", "yellow");
+            d3.select("#room-"+d.value.roomId).attr("class", "selected");
+            
+
+          });
 
 
       // Add a label.
