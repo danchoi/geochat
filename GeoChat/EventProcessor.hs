@@ -97,12 +97,12 @@ processMsg conn client (JoinRoom rid) = do
             c <- liftM UpdatedClient $ refreshClient conn client
             rleft <- liftM UpdatedRoom $ findRoom conn oldRid 
             rjoined <- liftM UpdatedRoom $ findRoom conn rid
-            return [c, rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined"]
+            return [rleft $ roomMessage client' "left", rjoined $ roomMessage client' "joined", c]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
         c<- liftM UpdatedClient $ refreshClient conn client
         r <- liftM UpdatedRoom $ findRoom conn rid
-        return [c, r $ roomMessage client' "joined"]
+        return [r $ roomMessage client' "joined", c]
 
 processMsg conn client Leave = do
   client' <- refreshClient conn client
