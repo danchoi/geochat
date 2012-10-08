@@ -44,8 +44,10 @@ var ServerEvents = {
     }
   },
   Broadcast: function(data) {
+    console.log(data);
     var roomId = data.roomId;
     d3.select(".rooms #room-"+roomId+" circle").style("stroke", "white").transition().style("stroke", "black");
+    d3.select(".rooms #room-"+roomId+" text.chat").text(data.user.nickName + ": " + data.text);
   }
 }
 
@@ -133,7 +135,6 @@ function createMap() {
           .attr("class", "marker")
           .attr("id", function(d,i) { return ("room-" + d.value.roomId) });
 
-      // Add a circle.
       marker.append("svg:circle")
           .attr("r", 14.5)
           .attr("cx", 25)
@@ -141,11 +142,17 @@ function createMap() {
           //.on("mouseover", function(d, i) { d3.select(this).style("fill", "yellow")})
           //.on("mouseout", function(d, i) { d3.select(this).style("fill", "red")})
 
-      // Add a label.
       marker.append("svg:text")
+          .attr("class", "numParticipants")
           .attr("x", 22)
-          .attr("dy", 28)
+          .attr("dy", 29)
           .text(function(d) { return d.value.numParticipants; });
+
+      marker.append("svg:text")
+          .attr("class", "chat")
+          .attr("x", 22)
+          .attr("dy", 60)
+          .text("chat");
 
       function transform(d) {
         d1 = new google.maps.LatLng(d.value.latLng[0], d.value.latLng[1]);

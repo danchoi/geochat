@@ -162,10 +162,12 @@ span.user {
 }
 
 .rooms svg {
-  width:150px;
-  height:50px;
+  width: 250px;
+  height: 90px;
   padding-right: 100px;
-  font: 10px sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: Helvetica, sans-serif;
 }
 
 .rooms .marker circle {
@@ -177,14 +179,12 @@ span.user {
 
   fill: blue;
 }
-.rooms .marker text {
+.rooms .marker text.numParticipants {
   fill: white;
   stroke-width: 2px;
 }
-.rooms .client circle {
-  fill: green ;
-  stroke: black;
-  stroke-width: 1.5px;
+.rooms .marker text.chat {
+  fill: black;
+  stroke-width: 2px;
+  background-color: white;
 }
-
-
