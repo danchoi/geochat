@@ -49,3 +49,10 @@ Update the bounding box of each client in DB
 
 http://postgis.refractions.net/documentation/manual-1.3/ch03.html
 
+
+
+Main.hs: writev: resource vanished (Connection reset by peer)
+Main.hs: writev: resource vanished (Broken pipe)
+Main.hs: writev: resource vanished (Broken pipe)
+
+

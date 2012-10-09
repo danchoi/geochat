@@ -159,6 +159,8 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             msgsFromServer <- liftIO $ processMsg conn client Leave
             liftIO $ broadcast msgsFromServer s'
             return s'
-        _ -> return ()
+        _ -> do 
+            liftIO $ putStrLn "Uncaught Error"
+            return ()
 
 
