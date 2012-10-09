@@ -91,7 +91,6 @@ function startWS() {
   websocket.onmessage = function(event){
     var message = JSON.parse(event.data);
     var f = ServerEvents[message.type];
-    console.log("ServerEvent: " + event.data);
     if (typeof f == 'function') { 
       f(message) 
     } else { 

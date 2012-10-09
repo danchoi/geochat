@@ -64,7 +64,7 @@ processMsg conn _ (ListActiveRooms (swlat,swlng) (nelat,nelng)) = do
         \inner join clients using (room_id) \
         \where rooms.lat >= ? and rooms.lat <= ? \
         \and rooms.lng >= ? and rooms.lng <= ? \
-        \group by rooms.room_id order by rooms.created desc limit 30"
+        \group by rooms.room_id order by rooms.created desc "
   xs :: [Only Int] <- query conn q (swlat,nelat,swlng,nelng)
   forM xs (\x -> do 
     room <- findRoom conn (fromOnly x) 

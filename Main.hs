@@ -132,14 +132,13 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
     rawMsg <- WS.receiveData 
     case (decode rawMsg :: Maybe MessageFromClient) of
         Just (MapBoundsUpdated sw ne) -> do 
-            liftIO $ putStrLn $ "Updating client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
+            -- liftIO $ putStrLn $ "Updating client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
             liftIO $ modifyMVar_ state $ \s -> do
                 let s' = updateClientSinkBounds client sw ne s
                 return s'
         Just m@(ListActiveRooms sw ne) -> do 
-            liftIO $ putStrLn $ "Populating map for client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
+            -- liftIO $ putStrLn $ "Populating map for client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
             msgsFromServer <- liftIO $ processMsg conn client m
-            liftIO $ putStrLn $ "Sending MessageFromServer to client " ++ (show $ clientId client) ++ ": " `mappend` (show msgsFromServer)
             liftIO $ singlecast msgsFromServer sink
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient " ++ (show $ clientId client) ++  ": " `mappend` (show clientMessage)
