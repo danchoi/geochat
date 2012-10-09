@@ -38,6 +38,7 @@ var ServerEvents = {
         if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
             d3.selectAll(".marker").attr("class", "marker");
             d3.selectAll("#room-"+rid).attr("class", "marker selected");
+            $("#message").focus();
         }
     } else if (!exists) {
         console.log("Adding room node "+rid);
@@ -48,7 +49,6 @@ var ServerEvents = {
 
   },
   Broadcast: function(data) {
-    console.log(data);
     var roomId = data.roomId;
     d3.select(".rooms #room-"+roomId+" circle").style("stroke", "white").transition().style("stroke", "black");
     d3.select(".rooms #room-"+roomId+" text.chat").text(data.client[1] + ": " + data.text);
