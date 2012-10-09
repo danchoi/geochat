@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
 module GeoChat.EventProcessor where
 
@@ -91,10 +90,10 @@ processMsg conn client (CreateRoom (lat, lng)) = do
   xs :: [(Int, Double, Double, Double)] <- query conn q0 (lng, lat, lng, lat)
   case xs of
     ((rid,lat,lng,dist):_) -> do
-      putStrLn $ "Instead of creating, nearby room " ++ (show dist) ++ " meters close, rid "  ++ (show rid) 
+      -- putStrLn $ "Instead of creating, nearby room " ++ (show dist) ++ " meters close, rid "  ++ (show rid) 
       processMsg conn client (JoinRoom rid)
     otherwise -> do
-      putStrLn $ "Creating new room at " ++ (show lat) ++ ", " ++ (show lng)
+      -- putStrLn $ "Creating new room at " ++ (show lat) ++ ", " ++ (show lng)
       let q = "insert into rooms (lat, lng) values (?, ?) returning room_id"
       ((Only rid):_) :: [Only Int] <- query conn q (lat, lng)
       processMsg conn client (JoinRoom rid)
