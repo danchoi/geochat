@@ -59,11 +59,13 @@ makeUpdatedRoom room = UpdatedRoom (latLng room) room
 
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
-processMsg conn _ ListActiveRooms = do
-  -- TODO scope by geo
+processMsg conn _ (ListActiveRooms (swlat,swlng) (nelat,nelng)) = do
   let q = "select rooms.room_id from rooms \
-        \inner join clients using (room_id) group by rooms.room_id order by rooms.created desc limit 20"
-  xs :: [Only Int] <- query_ conn q 
+        \inner join clients using (room_id) \
+        \where rooms.lat >= ? and rooms.lat <= ? \
+        \and rooms.lng >= ? and rooms.lng <= ? \
+        \group by rooms.room_id order by rooms.created desc limit 30"
+  xs :: [Only Int] <- query conn q (swlat,nelat,swlng,nelng)
   forM xs (\x -> do 
     room <- findRoom conn (fromOnly x) 
     return $ makeUpdatedRoom room InitRoom)

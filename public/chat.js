@@ -22,8 +22,6 @@ var ServerEvents = {
     // BEWARE the rooms and roomsMap are to be used with discrimination; I need a better way to query these collections
     var rid = r.roomId;
     if (data.change && roomsMap[rid] && data.change.type === "InitRoom" && roomsMap[rid].roomId === rid) {
-          console.log("DRAG");
-          // This is triggered by dragging the map
           return;
     }
     if (r.numParticipants === 0) {
@@ -69,7 +67,14 @@ function tellservermybounds() {
                 latNE:  bounds.getNorthEast().lat(),
                 lngNE:  bounds.getNorthEast().lng() }
     tellServer(myMapBounds);
-    tellServer({type:"ListActiveRooms"});
+    myMapBounds["type"] = "ListActiveRooms";
+    tellServer(myMapBounds);
+    // We remove this listen and put another one on dragend
+    // the initial bounds_changed event is sufficient to get initialization
+    // information that we send to the server.
+    // After that this listener is too sensitive and fires way too often during a drag or resizing
+    google.maps.event.addListenerOnce(map, 'dragend', tellservermybounds);
+    google.maps.event.addListenerOnce(map, 'zoom_changed', tellservermybounds);
   } 
 }
 
@@ -129,7 +134,7 @@ function createMap() {
 
   overlay = new google.maps.OverlayView();
   overlay.setMap(map);
-  google.maps.event.addListener(map, "bounds_changed", tellservermybounds); 
+  google.maps.event.addListenerOnce(map, "bounds_changed", tellservermybounds); 
   overlay.onAdd = function() {
 
     layer = d3.select(this.getPanes().overlayMouseTarget).append("div").attr("class", "rooms");

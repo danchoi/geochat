@@ -35,7 +35,7 @@ data Client = Client { clientId :: Int
 
 instance ToJSON Client
 
-data MessageFromClient = ListActiveRooms
+data MessageFromClient = ListActiveRooms LatLng LatLng
                        | MapBoundsUpdated LatLng LatLng
                        | CreateRoom LatLng
                        | ChangeNickname Nickname 

@@ -87,14 +87,19 @@ broadcast :: [MessageFromServer] -> ServerState -> IO ()
 broadcast ms s = do
   forM_ (M.toList s) $ \c -> mapM (send c) ms
 
+singlecast :: [MessageFromServer] -> WS.Sink WS.Hybi00 -> IO ()
+singlecast ms sink = do
+  mapM_ (\m -> sendEncoded sink m) ms
 
+sendEncoded :: WS.Sink WS.Hybi00 -> MessageFromServer -> IO ()
 sendEncoded sink message = WS.sendSink sink $ WS.textData $ encode message
 
 inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
   lat > swlat && lat < nelat && lng > swlng && lng < nelng
 
 refuseSend cid m bounds = 
-  putStrLn $ "Client " ++ (show cid) ++ " is out of bounds"
+  -- putStrLn $ "Client " ++ (show cid) ++ " is out of bounds"
+  return ()
 
 send :: ClientSink -> MessageFromServer -> IO ()
 send (cid, (Just bounds, sink)) m = 
@@ -122,16 +127,20 @@ application state rq = do
         return s'
     receiveMessage state conn client sink
 
-receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink a -> WS.WebSockets p ()
+receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink WS.Hybi00 -> WS.WebSockets p ()
 receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
-    
     case (decode rawMsg :: Maybe MessageFromClient) of
         Just (MapBoundsUpdated sw ne) -> do 
             liftIO $ putStrLn $ "Updating client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
             liftIO $ modifyMVar_ state $ \s -> do
                 let s' = updateClientSinkBounds client sw ne s
                 return s'
+        Just m@(ListActiveRooms sw ne) -> do 
+            liftIO $ putStrLn $ "Populating map for client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
+            msgsFromServer <- liftIO $ processMsg conn client m
+            liftIO $ putStrLn $ "Sending MessageFromServer to client " ++ (show $ clientId client) ++ ": " `mappend` (show msgsFromServer)
+            liftIO $ singlecast msgsFromServer sink
         Just clientMessage -> do 
             liftIO $ putStrLn $ "Processing MessageFromClient " ++ (show $ clientId client) ++  ": " `mappend` (show clientMessage)
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
