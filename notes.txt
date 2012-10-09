@@ -56,3 +56,74 @@ Main.hs: writev: resource vanished (Broken pipe)
 Main.hs: writev: resource vanished (Broken pipe)
 
 
+
+select rooms.room_id from rooms inner join clients using (room_id) \
+        where ST_Intersects(rooms.geom, (select geom from clients where
+        client_id = 230))
+        group by rooms.room_id order by rooms.created desc 
+
+Need to add bounding box geom to client
+
+
+http://www.postgis.org/docs/ST_Extent.html
+
+As @underdark post, st_extent will do the job, but be aware that it will
+not return a geometry. If you need a geometry type you should use
+something like
+
+SELECT ST_SetSRID(ST_Extent(the_geom),THE_SRID) as table_extent FROM
+your_table;
+Also if what you need is get the bounding box of each of the rows i
+think that you can use this sentence:
+
+SELECT ST_SetSRID(ST_Extent(the_geom),THE_SRID) as table_extent FROM
+your_table GROUP BY gid;
+
+http://gis.stackexchange.com/questions/6191/selecting-by-bounding-box-with-postgis?rq=1
+
+http://gis.stackexchange.com/questions/6191/selecting-by-bounding-box-with-postgis?rq=1
+
+ST_box2d(geometry)
+SELECT ST_MakePolygon(ST_GeomFromText('LINESTRING(75.15 29.53,77 29,77.6
+29.5, 75.15 29.53)'));
+
+
+SELECT ST_AsText(ST_Transform(ST_GeomFromText('POLYGON((743238 2967416,743238 2967450,
+	743265 2967450,743265.625 2967416,743238 2967416))',2249),4326)) As wgs_geom;
+
+ wgs_geom
+---------------------------
+ POLYGON((-71.1776848522251 42.3902896512902,-71.1776843766326 42.3903829478009,
+-71.1775844305465 42.3903826677917,-71.1775825927231 42.3902893647987,-71.177684
+8522251 42.3902896512902));
+(1 row)
+
+
+
+ST_Transform(ST_GeomFromText('POINT(' || ? || ' ' || ? || ')', 4326, 2163))
+ST_Transform(ST_GeomFromText('POINT(' || ? || ' ' || ? || ')', 4326, 2163))
+
+ST_GeomFromText('LINESTRING(-70.729212 42.373848,-70.67569 42.375098)',4269)
+
+ST_GeomFromText('LINESTRING(' 
+|| ? || ' ' || ? || ',' 
+|| ? || ' ' || ? || ','
+|| ? || ' ' || ? || ',' 
+|| ? || ' ' || ? || ','
+|| ? || ' ' || ? || ')', 4269)
+
+
+-70.729212 42.373848,-70.67569 42.375098)',4269)
+
+
+
+SELECT ST_Transform(
+  ST_MakePolygon(
+    ST_GeomFromText('LINESTRING(' 
+    || ? || ' ' || ? || ',' 
+    || ? || ' ' || ? || ','
+    || ? || ' ' || ? || ',' 
+    || ? || ' ' || ? || ','
+    || ? || ' ' || ? || ')', 4269)), 2163);
+
+

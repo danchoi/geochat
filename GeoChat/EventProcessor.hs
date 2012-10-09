@@ -10,6 +10,7 @@ import Database.PostgreSQL.Simple
 import Data.Time.Clock
 import Data.Maybe (fromJust)
 import Data.List (nubBy)
+import qualified Data.ByteString.Char8 as C
 
 connectInfo :: ConnectInfo
 connectInfo = defaultConnectInfo { connectDatabase = "geochat"
@@ -59,12 +60,19 @@ makeUpdatedRoom room = UpdatedRoom (latLng room) room
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
 processMsg conn _ (ListActiveRooms (swlat,swlng) (nelat,nelng)) = do
+  -- make a polygon box from PostGIS; 5 points to make a box
+
+ 
   let q = "select rooms.room_id from rooms \
         \inner join clients using (room_id) \
-        \where rooms.lat >= ? and rooms.lat <= ? \
-        \and rooms.lng >= ? and rooms.lng <= ? \
+        \where ST_Intersects(  \
+        \   ST_Transform(ST_MakePolygon(ST_GeomFromText('LINESTRING(' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ')', 4269)), 2163), \
+        \   rooms.geom)  \
         \group by rooms.room_id order by rooms.created desc "
-  xs :: [Only Int] <- query conn q (swlat,nelat,swlng,nelng)
+      variables = (swlng,swlat,nelng,swlat,nelng,nelat,swlng,nelat,swlng,swlat) 
+
+  -- formatQuery conn q variables >>= C.putStrLn  -- uncomment to debug
+  xs :: [Only Int] <- query conn q variables -- go around the 4 corners and end at start
   forM xs (\x -> do 
     room <- findRoom conn (fromOnly x) 
     return $ makeUpdatedRoom room InitRoom)
