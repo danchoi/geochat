@@ -33,3 +33,15 @@ install postgis
 ------------------------------------------------------------------------
 
 
+
+Need to switch to using a spatial index on lat lng for comparisions
+
+Also, calculating the target clients in the POSTgis layer and then pick
+out targets using Map 
+
+  INSTEAD OF using inBounds in Main.hs
+
+
+
+http://postgis.refractions.net/documentation/manual-1.3/ch03.html
+

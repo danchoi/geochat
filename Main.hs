@@ -83,6 +83,7 @@ updateClientSinkBounds c sw ne s =
   M.update f (clientId c) s
     where f (_, sink) = Just (Just (sw, ne), sink)
 
+-- inefficient, change
 broadcast :: [MessageFromServer] -> ServerState -> IO ()
 broadcast ms s = do
   forM_ (M.toList s) $ \c -> mapM (send c) ms
@@ -100,6 +101,8 @@ inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
 refuseSend cid m bounds = 
   -- putStrLn $ "Client " ++ (show cid) ++ " is out of bounds"
   return ()
+
+-- TODO change this to use faster lookup by key and calculate target clients with PostGIS
 
 send :: ClientSink -> MessageFromServer -> IO ()
 send (cid, (Just bounds, sink)) m = 
