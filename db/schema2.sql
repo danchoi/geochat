@@ -11,4 +11,6 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS update_room_geom_trigger ON rooms;
 CREATE TRIGGER update_room_geom_trigger BEFORE INSERT ON rooms FOR EACH ROW EXECUTE PROCEDURE update_room_geom();
 
+CREATE INDEX rooms_geom_idx  ON rooms  USING GIST (geom);
+CREATE INDEX clients_geom_idx  ON clients  USING GIST (geom);
 
