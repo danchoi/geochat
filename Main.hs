@@ -32,8 +32,9 @@ import qualified Snap.Internal.Http.Types as Snap
 import qualified Snap.Types.Headers as Headers
 import Data.List (foldl')
 import qualified Data.Text.Encoding as TE
-
 import qualified Data.Map as M
+
+import Control.OldException
 
 simpleConfig :: Config m a
 simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
@@ -84,9 +85,11 @@ updateClientSinkBounds c sw ne s =
     where f (_, sink) = Just (Just (sw, ne), sink)
 
 -- inefficient, change
-broadcast :: [MessageFromServer] -> ServerState -> IO ()
-broadcast ms s = do
-  forM_ (M.toList s) $ \c -> mapM (send c) ms
+broadcast :: [MessageFromServer] -> MVar ServerState -> IO ()
+broadcast ms state = do
+  clientSinks <- readMVar state
+  forM_ (M.toList clientSinks) $ \c -> mapM (send state c) ms
+  return ()
 
 singlecast :: [MessageFromServer] -> WS.Sink WS.Hybi00 -> IO ()
 singlecast ms sink = 
@@ -104,16 +107,25 @@ refuseSend cid m bounds =
 
 -- TODO change this to use faster lookup by key and calculate target clients with PostGIS
 
-send :: ClientSink -> MessageFromServer -> IO ()
-send (cid, (Just bounds, sink)) m = 
-  case m of 
-    UpdatedRoom latLng _ _  ->
-      if (inBounds bounds latLng) then sendEncoded sink m else refuseSend cid m bounds
-    Broadcast latLng _ _ _  ->
-      if (inBounds bounds latLng) then sendEncoded sink m else refuseSend cid m bounds
-    otherwise -> sendEncoded sink m
-
-send (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
+send :: MVar ServerState -> ClientSink -> MessageFromServer -> IO ()
+send state (cid, (Just bounds, sink)) m = do
+  r <- try (
+    case m of 
+      UpdatedRoom latLng _ _  ->
+        if (inBounds bounds latLng) then sendEncoded sink m else refuseSend cid m bounds
+      Broadcast latLng _ _ _  ->
+        if (inBounds bounds latLng) then sendEncoded sink m else refuseSend cid m bounds
+      otherwise -> sendEncoded sink m)
+  case r of 
+      Left e -> do
+          liftIO $ modifyMVar_ state $ \s -> do
+              let s' = removeClientSink cid s
+              return s'
+          putStrLn $ "Error sending sink for client " ++ (show cid) ++ ". Removing sink."
+      Right _ ->
+          putStrLn "Successfully send sink"
+ 
+send state (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
 
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
 application state rq = do
@@ -143,7 +155,7 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             liftIO $ singlecast msgsFromServer sink
         Just clientMessage -> do 
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
-            liftIO $ readMVar state >>= broadcast msgsFromServer
+            liftIO $ broadcast msgsFromServer state
             return ()
         Nothing -> do 
             let errMsg = (E.decodeUtf8 rawMsg)
@@ -152,13 +164,14 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
     receiveMessage state conn client sink
   where
     catchDisconnect e = case fromException e of
-        Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ \s -> do
-            let s' = removeClientSink (clientId client) s
-            putStrLn $ "Connection closed by client " ++ (show . clientId $ client)
-            putStrLn $ "Sinks left: " ++ ((show . M.size) s')
+        Just WS.ConnectionClosed -> do 
+            liftIO $ modifyMVar_ state $ \s -> do
+                let s' = removeClientSink (clientId client) s
+                putStrLn $ "Connection closed by client " ++ (show . clientId $ client)
+                putStrLn $ "Sinks left: " ++ ((show . M.size) s')
+                return s'
             msgsFromServer <- liftIO $ processMsg conn client Leave
-            liftIO $ broadcast msgsFromServer s'
-            return s'
+            liftIO $ broadcast msgsFromServer state
         _ -> do 
             liftIO $ putStrLn "Uncaught Error"
             return ()
