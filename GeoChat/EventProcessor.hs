@@ -55,6 +55,8 @@ tupClient c = ((clientId c), (nickName c))
 refreshRoom :: Connection -> Room -> IO Room
 refreshRoom conn room = findRoom conn (roomId room)
 
+makeUpdatedRoom room = UpdatedRoom (latLng room) room
+
 processMsg :: Connection -> Client -> MessageFromClient -> IO [MessageFromServer]
 
 processMsg conn _ ListActiveRooms = do
@@ -64,7 +66,7 @@ processMsg conn _ ListActiveRooms = do
   xs :: [Only Int] <- query_ conn q 
   forM xs (\x -> do 
     room <- findRoom conn (fromOnly x) 
-    return $ UpdatedRoom room InitRoom)
+    return $ makeUpdatedRoom room InitRoom)
 
 processMsg conn client (ChangeNickname newname) = do
   let q = "update clients set nickname = ? where client_id = ?" 
@@ -73,7 +75,7 @@ processMsg conn client (ChangeNickname newname) = do
   case (clientRoomId client') of
       Nothing -> return []
       Just (rid) -> do
-        r <- liftM UpdatedRoom $ findRoom conn rid
+        r <- liftM makeUpdatedRoom $ findRoom conn rid
         return [r $ ChangedNickname $ tupClient client]
 
 -- TODO if close to existing live room, Join that room
@@ -105,12 +107,12 @@ processMsg conn client (JoinRoom rid) = do
           True -> return [] -- no-op
           False -> do
             execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-            rleft <- liftM UpdatedRoom $ findRoom conn oldRid 
-            rjoined <- liftM UpdatedRoom $ findRoom conn rid
+            rleft <- liftM makeUpdatedRoom $ findRoom conn oldRid 
+            rjoined <- liftM makeUpdatedRoom $ findRoom conn rid
             return [rleft $ ExitRoom (tupClient client'), rjoined $ EnterRoom (tupClient client')]
     Nothing -> do
         execute conn "update clients set room_id = ? where client_id = ?" (rid, (clientId client))
-        r <- liftM UpdatedRoom $ findRoom conn rid
+        r <- liftM makeUpdatedRoom $ findRoom conn rid
         return [r $ EnterRoom (tupClient client')]
 
 processMsg conn client Leave = do
@@ -119,7 +121,7 @@ processMsg conn client Leave = do
   case r of 
     Just x -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
-      r <- liftM UpdatedRoom $ findRoom conn x
+      r <- liftM makeUpdatedRoom $ findRoom conn x
       return $ [r $ ExitRoom $ tupClient client']
     Nothing -> do
       execute conn "update clients set room_id = null, exited = now() where client_id = ?" (Only $ clientId client')
@@ -133,7 +135,7 @@ processMsg conn client (PostMessage msg) = do
       r <- findRoom conn rid
       let q = "insert into messages (room_id, client_id, client_nick, content) values (?, ?, ?, ?) returning message_id, created"
       ((mid,time):_) :: [(Int, UTCTime)] <- query conn q (rid, clientId client', nickName client', msg)
-      return [Broadcast (tupClient client') rid (latLng r) msg]
+      return [Broadcast (latLng r) (tupClient client') rid msg]
     Nothing -> do
       return []
 

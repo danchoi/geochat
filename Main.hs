@@ -78,12 +78,33 @@ addClientSink cs@(cid, (_,sink)) s = M.insert cid (Nothing,sink) s
 removeClientSink :: ClientId -> ServerState -> ServerState
 removeClientSink cid s = M.delete cid s 
 
+updateClientSinkBounds :: Client -> LatLng -> LatLng -> ServerState -> ServerState
+updateClientSinkBounds c sw ne s = 
+  M.update f (clientId c) s
+    where f (_, sink) = Just (Just (sw, ne), sink)
+
 broadcast :: [MessageFromServer] -> ServerState -> IO ()
 broadcast ms s = do
-  forM_ $ (M.toList s) $ \c -> mapM (send c) ms
+  forM_ (M.toList s) $ \c -> mapM (send c) ms
+
+
+sendEncoded sink message = WS.sendSink sink $ WS.textData $ encode message
+
+inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
+  lat > swlat && lat < nelat && lng > swlng && lng < nelng
+
+refuseSend cid m bounds = 
+  putStrLn $ "Client " ++ (show cid) ++ " is out of bounds"
 
 send :: ClientSink -> MessageFromServer -> IO ()
-send (_, (Just bounds, sink)) m = WS.sendSink sink $ WS.textData $ encode m
+send (cid, (Just bounds, sink)) m = 
+  case m of 
+    UpdatedRoom latLng _ _  ->
+      if (inBounds bounds latLng) then sendEncoded sink m else refuseSend cid m bounds
+    Broadcast latLng _ _ _  ->
+      if (inBounds bounds latLng) then sendEncoded sink m else refuseSend cid m bounds
+    otherwise -> sendEncoded sink m
+
 send (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
 
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
@@ -99,8 +120,6 @@ application state rq = do
         let s' = addClientSink (clientId client, (Nothing, sink)) s
         WS.sendSink sink $ WS.textData $ encode $ Handshake $ clientId client
         return s'
-    rooms <- liftIO $ processMsg conn client ListActiveRooms 
-    WS.sendTextData $ encode rooms 
     receiveMessage state conn client sink
 
 receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink a -> WS.WebSockets p ()
@@ -108,13 +127,15 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
     rawMsg <- WS.receiveData 
     
     case (decode rawMsg :: Maybe MessageFromClient) of
-        Just (MapBoundsUpdated latLngSW latLngNE) -> do 
-            liftIO $ putStrLn $ "Updating client " ++ (show $ clientId client) ++ " SW:" ++ (show latLngSW) ++ " NE:" ++ (show latLngNE)
-
+        Just (MapBoundsUpdated sw ne) -> do 
+            liftIO $ putStrLn $ "Updating client " ++ (show $ clientId client) ++ " SW:" ++ (show sw) ++ " NE:" ++ (show ne)
+            liftIO $ modifyMVar_ state $ \s -> do
+                let s' = updateClientSinkBounds client sw ne s
+                return s'
         Just clientMessage -> do 
-            liftIO $ putStrLn $ "Processing MessageFromClient: " `mappend` (show clientMessage)
+            liftIO $ putStrLn $ "Processing MessageFromClient " ++ (show $ clientId client) ++  ": " `mappend` (show clientMessage)
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
-            liftIO $ putStrLn $ "Sending MessageFromServer: " `mappend` (show msgsFromServer)
+            liftIO $ putStrLn $ "Sending MessageFromServer to client " ++ (show $ clientId client) ++ ": " `mappend` (show msgsFromServer)
             liftIO $ readMVar state >>= broadcast msgsFromServer
             return ()
         Nothing -> do 

@@ -13,31 +13,42 @@ var tellServer = function (data) {
 };
 
 var ServerEvents = {
+  Handshake: function(data) {
+    console.log("Handshake: " + data);
+    myClientId = data['clientId'];
+  },
   UpdatedRoom: function(data) {
     var r = data.room;
+    // BEWARE the rooms and roomsMap are to be used with discrimination; I need a better way to query these collections
+    var rid = r.roomId;
+    if (data.change && roomsMap[rid] && data.change.type === "InitRoom" && roomsMap[rid].roomId === rid) {
+          console.log("DRAG");
+          // This is triggered by dragging the map
+          return;
+    }
     if (r.numParticipants === 0) {
-        console.log("Remove room "+r.roomId);
+        console.log("Remove room "+rid);
         for (var i = 0, j = rooms.length; i < j; i++) {
-          if (rooms[i].roomId === r.roomId) {
+          if (rooms[i].roomId === rid) {
             rooms.splice(i,1);
             break;
           }
         }
-        $("#room-"+r.roomId).remove();
-        delete roomsMap[r.roomId];
-    } else if (roomsMap[r.roomId] && (roomsMap[r.roomId].numParticipants !== r.numParticipants)) {
-        roomsMap[r.roomId] = r;
-        $("#room-"+r.roomId+" text.numParticipants").text(r.numParticipants);
+        $("#room-"+rid).remove();
+        delete roomsMap[rid];
+    } else if (roomsMap[rid] && (roomsMap[rid].numParticipants !== r.numParticipants)) {
+        roomsMap[rid] = r;
+        $("#room-"+rid+" text.numParticipants").text(r.numParticipants);
     } else {
-        console.log("Adding room node "+r.roomId);
+        console.log("Adding room node "+rid);
         rooms.push(r);
-        roomsMap[r.roomId] = r;
+        roomsMap[rid] = r;
         window.overlay.draw();
     }
 
     if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
         d3.selectAll(".marker").attr("class", "marker");
-        d3.select("#room-"+r.roomId).attr("class", "marker selected");
+        d3.select("#room-"+rid).attr("class", "marker selected");
     }
   },
   Broadcast: function(data) {
@@ -46,10 +57,11 @@ var ServerEvents = {
     d3.select(".rooms #room-"+roomId+" circle").style("stroke", "white").transition().style("stroke", "black");
     d3.select(".rooms #room-"+roomId+" text.chat").text(data.client[1] + ": " + data.text);
   }
+
 }
 
 function tellservermybounds() {
-  if (websocket.readyState == 1) {
+  if (websocket && websocket.readyState == 1) {
     var bounds = map.getBounds();
     var myMapBounds = {type: "MapBoundsUpdated", 
                 latSW:  bounds.getSouthWest().lat(),
@@ -57,7 +69,8 @@ function tellservermybounds() {
                 latNE:  bounds.getNorthEast().lat(),
                 lngNE:  bounds.getNorthEast().lng() }
     tellServer(myMapBounds);
-  }
+    tellServer({type:"ListActiveRooms"});
+  } 
 }
 
 
@@ -71,24 +84,14 @@ function startWS() {
     tellservermybounds(myMapBounds);
   };
   websocket.onmessage = function(event){
-    var x = JSON.parse(event.data);
-    if (Object.prototype.toString.call( x) === '[object Array]') {
-      for (var i = 0, j = x.length; i < j; i++) {
-        var message = x[i];
-        var f = ServerEvents[message.type];
-        console.log("ServerEvent: " + event.data);
-        if (typeof f == 'function') { 
-          f(message) 
-        } else { 
-          console.log("Unrecognized event: "+event.data);
-        }
-      }
-    } else if (x['type'] === 'Handshake') {
-        console.log("Handshake: " + event.data);
-        myClientId = x['clientId'];
-    } else {  // receive a chat message 
-      console.log("Unparseable message: "+event.data);
-    }
+    var message = JSON.parse(event.data);
+    var f = ServerEvents[message.type];
+    console.log("ServerEvent: " + event.data);
+    if (typeof f == 'function') { 
+      f(message) 
+    } else { 
+      console.log("Unrecognized event: "+event.data);
+    } 
   };
   
   websocket.onclose = function(event){
@@ -111,11 +114,6 @@ function startWS() {
 };
 
 
-
-
-// d3
-
-// layer.selectAll("svg.marker").data([]).exit().remove()
 
 var overlay;
 var layer;
@@ -174,7 +172,8 @@ function createMap() {
             .style("top", (d2.y-25) + "px");
       }
     };
-    startWS();
+    startWS();  
+
   }
 
 }

@@ -15,6 +15,7 @@ import Data.Vector (fromList)
 instance FromJSON MessageFromClient where
   parseJSON (Object v) 
     | Just "MapBoundsUpdated" <- M.lookup "type" v = MapBoundsUpdated <$> ((,) <$> v .: "latSW" <*> v .: "lngSW") <*> ((,) <$> v .: "latNE" <*> v .: "lngNE")
+    | Just "ListActiveRooms" <- M.lookup "type" v = pure ListActiveRooms 
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
     | Just "CreateRoom" <- M.lookup "type" v = CreateRoom <$> ((,) <$> v .: "lat" <*>  v .: "lng")
     | Just "ChangeNickname" <- M.lookup "type" v = ChangeNickname <$> v .: "nickname" 
@@ -26,8 +27,9 @@ instance FromJSON MessageFromClient where
 
 instance ToJSON MessageFromServer where
   toJSON (Handshake cid) = object ["type" .= ("Handshake" :: Text), "clientId" .= cid]
-  toJSON (UpdatedRoom room change) = object ["type" .= ("UpdatedRoom" :: Text), "room" .= room, "change" .= change]
-  toJSON (Broadcast client roomId latLng text) = 
+  toJSON (UpdatedRoom latLng room change) = 
+      object ["type" .= ("UpdatedRoom" :: Text), "room" .= room, "change" .= change, "latLng" .= latLng]
+  toJSON (Broadcast latLng client roomId text) = 
       object ["type" .= ("Broadcast" :: Text), "client" .= client, "roomId" .= roomId, "latLng" .= latLng, "text" .= text]
   toJSON (ErrorMessage text) = object ["type" .= ("ErrorMessage" :: Text), "content" .= text]
 

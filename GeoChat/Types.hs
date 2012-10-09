@@ -33,9 +33,7 @@ data Client = Client { clientId :: Int
                      , clientRoomId :: Maybe Int
                      } deriving (Generic, Show)
 
-
 instance ToJSON Client
-
 
 data MessageFromClient = ListActiveRooms
                        | MapBoundsUpdated LatLng LatLng
@@ -52,8 +50,8 @@ data RoomChange = InitRoom
 
 
 data MessageFromServer = Handshake ClientId
-                       | UpdatedRoom Room RoomChange
-                       | Broadcast Client' RoomId LatLng Text
+                       | UpdatedRoom LatLng Room RoomChange
+                       | Broadcast LatLng Client' RoomId Text
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 
