@@ -88,8 +88,8 @@ broadcast ms s = do
   forM_ (M.toList s) $ \c -> mapM (send c) ms
 
 singlecast :: [MessageFromServer] -> WS.Sink WS.Hybi00 -> IO ()
-singlecast ms sink = do
-  mapM_ (\m -> sendEncoded sink m) ms
+singlecast ms sink = 
+    WS.sendSink sink $ WS.textData $ encode ms
 
 sendEncoded :: WS.Sink WS.Hybi00 -> MessageFromServer -> IO ()
 sendEncoded sink message = WS.sendSink sink $ WS.textData $ encode message

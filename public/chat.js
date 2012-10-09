@@ -21,10 +21,8 @@ var ServerEvents = {
     var r = data.room;
     // BEWARE the rooms and roomsMap are to be used with discrimination; I need a better way to query these collections
     var rid = r.roomId;
-    if (data.change && roomsMap[rid] && data.change.type === "InitRoom" && roomsMap[rid].roomId === rid) {
-          return;
-    }
-    if (r.numParticipants === 0) {
+    var exists = $("#room-"+rid).length > 0;
+    if (exists && r.numParticipants === 0) {
         console.log("Remove room "+rid);
         for (var i = 0, j = rooms.length; i < j; i++) {
           if (rooms[i].roomId === rid) {
@@ -34,20 +32,20 @@ var ServerEvents = {
         }
         $("#room-"+rid).remove();
         delete roomsMap[rid];
-    } else if (roomsMap[rid] && (roomsMap[rid].numParticipants !== r.numParticipants)) {
+    } else if (exists && (roomsMap[rid].numParticipants !== r.numParticipants)) {
         roomsMap[rid] = r;
         $("#room-"+rid+" text.numParticipants").text(r.numParticipants);
-    } else {
+        if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
+            d3.selectAll(".marker").attr("class", "marker");
+            d3.selectAll("#room-"+rid).attr("class", "marker selected");
+        }
+    } else if (!exists) {
         console.log("Adding room node "+rid);
         rooms.push(r);
         roomsMap[rid] = r;
         window.overlay.draw();
     }
 
-    if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
-        d3.selectAll(".marker").attr("class", "marker");
-        d3.select("#room-"+rid).attr("class", "marker selected");
-    }
   },
   Broadcast: function(data) {
     console.log(data);
@@ -90,9 +88,14 @@ function startWS() {
   };
   websocket.onmessage = function(event){
     var message = JSON.parse(event.data);
-    var f = ServerEvents[message.type];
-    if (typeof f == 'function') { 
-      f(message) 
+    if (message.type && typeof ServerEvents[message.type] === 'function') {
+        ServerEvents[message.type](message);
+    } else if ( Object.prototype.toString.call( message ) === '[object Array]' ) {
+        // A ListActiveRooms batch
+        for (var i = 0, j = message.length; i < j; i++) {
+          var m = message[i];
+          ServerEvents[m.type](m);
+        }
     } else { 
       console.log("Unrecognized event: "+event.data);
     } 
