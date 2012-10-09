@@ -123,7 +123,8 @@ send state (cid, (Just bounds, sink)) m = do
               return s'
           putStrLn $ "Error sending sink for client " ++ (show cid) ++ ". Removing sink."
       Right _ ->
-          putStrLn "Successfully send sink"
+          -- putStrLn "Successfully send sink"
+          return ()
  
 send state (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
 
