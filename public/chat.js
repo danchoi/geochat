@@ -67,14 +67,20 @@ function tellservermybounds() {
     tellServer(myMapBounds);
     myMapBounds["type"] = "ListActiveRooms";
     tellServer(myMapBounds);
-    // We remove this listen and put another one on dragend
-    // the initial bounds_changed event is sufficient to get initialization
-    // information that we send to the server.
-    // After that this listener is too sensitive and fires way too often during a drag or resizing
-    google.maps.event.addListenerOnce(map, 'dragend', tellservermybounds);
-    google.maps.event.addListenerOnce(map, 'zoom_changed', tellservermybounds);
+
+    // we restart the ws if the user repositions the map
+    // otherwise, if we keep calling for "ListActiveRooms" the
+    // ws sink on the server side will likely get clogged & be eventually removed
+    google.maps.event.addListenerOnce(map, 'dragend', restartWS);
+    google.maps.event.addListenerOnce(map, 'zoom_changed', restartWS);
   } 
 }
+
+function restartWS() {
+  websocket.close();
+  startWS();
+}
+
 
 
 $(document).ready(createMap);
