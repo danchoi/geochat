@@ -103,8 +103,9 @@ sendEncoded sink message = do
 inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
   lat > swlat && lat < nelat && lng > swlng && lng < nelng
 
-refuseSend cid m bounds = 
-  -- putStrLn $ "Client " ++ (show cid) ++ " is out of bounds"
+refuseSend :: ClientId -> MessageFromServer -> Bounds -> IO ()
+refuseSend cid m bounds = do
+  putStrLn $ "Client " ++ (show cid) ++ " is out of bounds for message " ++ (show m)
   return ()
 
 -- TODO change this to use faster lookup by key and calculate target clients with PostGIS
