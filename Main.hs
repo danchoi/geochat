@@ -52,8 +52,8 @@ simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
 main :: IO ()
 main = do
     state <- newMVar newServerState
-    -- httpServe simpleConfig $ site state  -- run with snap
-    WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
+    httpServe simpleConfig $ site state  -- run with snap
+    -- WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
 
 site :: MVar ServerState -> Snap ()
 site state = ifTop (writeBS "hello") <|> 
@@ -66,9 +66,9 @@ runWSSnap state = do
   runWebSocketsSnap $ application state
 
 type Bounds = (LatLng,LatLng)
-type ClientSink = (ClientId, (Maybe Bounds, WS.Sink WS.Hybi00)) 
+type ClientSink = (ClientId, (Maybe Bounds, WS.Sink WS.Hybi10)) 
 
-type ServerState = M.Map ClientId (Maybe Bounds, WS.Sink WS.Hybi00)
+type ServerState = M.Map ClientId (Maybe Bounds, WS.Sink WS.Hybi10)
 
 newServerState :: ServerState 
 newServerState = M.empty
@@ -91,11 +91,11 @@ broadcast ms state = do
   forM_ (M.toList clientSinks) $ \c -> mapM (send state c) ms
   return ()
 
-singlecast :: [MessageFromServer] -> WS.Sink WS.Hybi00 -> IO ()
+singlecast :: [MessageFromServer] -> WS.Sink WS.Hybi10 -> IO ()
 singlecast ms sink = 
     WS.sendSink sink $ WS.textData $ encode ms
 
-sendEncoded :: WS.Sink WS.Hybi00 -> MessageFromServer -> IO ()
+sendEncoded :: WS.Sink WS.Hybi10 -> MessageFromServer -> IO ()
 sendEncoded sink message = WS.sendSink sink $ WS.textData $ encode message
 
 inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
@@ -128,10 +128,11 @@ send state (cid, (Just bounds, sink)) m = do
  
 send state (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
 
-application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi00 ()
+application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi10 ()
 application state rq = do
     WS.acceptRequest rq
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
+    WS.spawnPingThread 30  :: WS.WebSockets WS.Hybi10 ()
     sink <- WS.getSink
     sinks <- liftIO $ readMVar state
     conn <- liftIO GeoChat.EventProcessor.dbconn
@@ -143,7 +144,7 @@ application state rq = do
         return s'
     receiveMessage state conn client sink
 
-receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink WS.Hybi00 -> WS.WebSockets p ()
+receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink WS.Hybi10 -> WS.WebSockets p ()
 receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
     case (decode rawMsg :: Maybe MessageFromClient) of
