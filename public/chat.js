@@ -86,8 +86,23 @@ function restartWS() {
 }
 
 
+$(document).ready(function() {
+  createMap();
+ 
+  $("form#chat_form").submit(function(e){
+    e.preventDefault();
+    var textfield = $("#message");
+    tellServer({type: 'PostMessage', content: textfield.val()});
+    textfield.val("");
+  });
 
-$(document).ready(createMap);
+  $("form#nick_form").submit(function(e){
+    e.preventDefault();
+    var textfield = $("#nickname");
+    tellServer({type: 'ChangeNickname', nickname: textfield.val()});
+  });
+
+});
 
 function startWS() {
   var webSocketURL = 'ws://localhost:9160/ws'; 
@@ -114,20 +129,6 @@ function startWS() {
   websocket.onclose = function(event){
     $("#chatStream").append('<br>Connection closed');
   };
- 
-  $("form#chat_form").submit(function(e){
-    e.preventDefault();
-    var textfield = $("#message");
-    tellServer({type: 'PostMessage', content: textfield.val()});
-    textfield.val("");
-  });
-
-  $("form#nick_form").submit(function(e){
-    e.preventDefault();
-    var textfield = $("#nickname");
-    tellServer({type: 'ChangeNickname', nickname: textfield.val()});
-  });
-
 };
 
 

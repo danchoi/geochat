@@ -122,6 +122,7 @@ sendMessageIfClientInBounds state (cid, (Just bounds, sink)) m = do
       Left e -> do
           liftIO $ modifyMVar_ state $ \s -> do
               let s' = removeClientSink cid s
+              putStrLn $ "Removed client sink " ++ (show cid)
               return s'
           putStrLn $ "Error sending sink for client " ++ (show cid) ++ ". Removing sink."
       Right _ -> do
@@ -149,6 +150,7 @@ application state rq = do
 receiveMessage :: WS.Protocol p => MVar ServerState -> Connection -> Client -> WS.Sink WS.Hybi10 -> WS.WebSockets p ()
 receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ do
     rawMsg <- WS.receiveData 
+    liftIO $ putStrLn $ "receiveData: " ++ (show rawMsg)
     case (decode rawMsg :: Maybe MessageFromClient) of
         Just (MapBoundsUpdated sw ne) -> do 
             liftIO $ modifyMVar_ state $ \s -> do
@@ -159,6 +161,7 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             liftIO $ singlecast msgsFromServer sink
         Just clientMessage -> do 
             msgsFromServer <- liftIO $ processMsg conn client clientMessage
+            liftIO $ putStrLn $ "about to broadcast: " ++ (show msgsFromServer)
             liftIO $ broadcast msgsFromServer state
             return ()
         Nothing -> do 
@@ -172,6 +175,7 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             liftIO $ modifyMVar_ state $ \s -> do
                 let s' = removeClientSink (clientId client) s
                 putStrLn $ "Connection closed by client " ++ (show . clientId $ client)
+                putStrLn $ "Removed client sink " ++ (show $ clientId client)
                 putStrLn $ "Sinks left: " ++ ((show . M.size) s')
                 return s'
             msgsFromServer <- liftIO $ processMsg conn client Leave
