@@ -9,7 +9,6 @@ import GeoChat.Types
 import Database.PostgreSQL.Simple
 import Data.Time.Clock
 import Data.Maybe (fromJust)
-import Data.List (nubBy)
 import qualified Data.ByteString.Char8 as C
 
 connectInfo :: ConnectInfo

@@ -52,8 +52,8 @@ simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
 main :: IO ()
 main = do
     state <- newMVar newServerState
-    -- httpServe simpleConfig $ site state  -- run with snap
-    WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
+    httpServe simpleConfig $ site state  -- run with snap
+    -- WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
 
 site :: MVar ServerState -> Snap ()
 site state = ifTop (writeBS "hello") <|> 
@@ -62,7 +62,6 @@ site state = ifTop (writeBS "hello") <|>
 
 runWSSnap :: MVar ServerState -> Snap ()
 runWSSnap state = do 
-  setTimeout 1
   runWebSocketsSnap $ application state
 
 type Bounds = (LatLng,LatLng)
@@ -97,7 +96,7 @@ singlecast ms sink =
 
 sendEncoded :: WS.Sink WS.Hybi10 -> MessageFromServer -> IO ()
 sendEncoded sink message = do 
-  putStrLn $ "Sending " ++ (show message)
+  -- putStrLn $ "Sending " ++ (show message)
   WS.sendSink sink $ WS.textData $ encode message
 
 inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
@@ -125,8 +124,8 @@ sendMessageIfClientInBounds state (cid, (Just bounds, sink)) m = do
               let s' = removeClientSink cid s
               return s'
           putStrLn $ "Error sending sink for client " ++ (show cid) ++ ". Removing sink."
-      Right _ ->
-          -- putStrLn "Successfully sent sink"
+      Right _ -> do
+          putStrLn $ "Successfully sent " ++ (show m) ++ " to client " ++ (show cid)
           return ()
  
 sendMessageIfClientInBounds state (cid,(Nothing,_)) _ = putStrLn $ "No sendMessage; client " ++ (show cid) ++ " has no latLng"
@@ -135,7 +134,7 @@ application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi10 ()
 application state rq = do
     WS.acceptRequest rq
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
-    -- WS.spawnPingThread 30  :: WS.WebSockets WS.Hybi10 ()
+    WS.spawnPingThread 30  :: WS.WebSockets WS.Hybi10 ()
     sink <- WS.getSink
     sinks <- liftIO $ readMVar state
     conn <- liftIO GeoChat.EventProcessor.dbconn
