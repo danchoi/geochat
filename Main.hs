@@ -52,8 +52,8 @@ simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
 main :: IO ()
 main = do
     state <- newMVar newServerState
-    httpServe simpleConfig $ site state  -- run with snap
-    -- WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
+    -- httpServe simpleConfig $ site state  -- run with snap
+    WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
 
 site :: MVar ServerState -> Snap ()
 site state = ifTop (writeBS "hello") <|> 
@@ -135,7 +135,7 @@ application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi10 ()
 application state rq = do
     WS.acceptRequest rq
     WS.getVersion >>= liftIO . putStrLn . ("Client version: " ++)
-    WS.spawnPingThread 30  :: WS.WebSockets WS.Hybi10 ()
+    -- WS.spawnPingThread 30  :: WS.WebSockets WS.Hybi10 ()
     sink <- WS.getSink
     sinks <- liftIO $ readMVar state
     conn <- liftIO GeoChat.EventProcessor.dbconn
