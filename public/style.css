@@ -91,14 +91,14 @@ margin-top:20px;
 }
 
 #chatStream {
-height:300px;
-background:#FFF;
-display:block;
-float:left;
-width:28%;
- overflow:scroll;
-margin-left:10px;
-height:500px;
+  height:300px;
+  background:#FFF;
+  display:block;
+  float:left;
+  width:100%;
+  overflow:scroll;
+  margin-left:10px;
+  height:500px;
 }
 
 html body div#chatStream div.message span.timecode {
