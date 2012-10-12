@@ -21,8 +21,8 @@ var ServerEvents = {
     var r = data.room;
     // BEWARE the rooms and roomsMap are to be used with discrimination; I need a better way to query these collections
     var rid = r.roomId;
-    var exists = $("#room-"+rid).length > 0;
-    if (exists && r.numParticipants === 0) {
+    var roomAlreadyExists = $("#room-"+rid).length > 0;
+    if (roomAlreadyExists && r.numParticipants === 0) {
         console.log("Remove room "+rid);
         for (var i = 0, j = rooms.length; i < j; i++) {
           if (rooms[i].roomId === rid) {
@@ -32,19 +32,20 @@ var ServerEvents = {
         }
         $("#room-"+rid).remove();
         delete roomsMap[rid];
-    } else if (exists && (roomsMap[rid].numParticipants !== r.numParticipants)) {
+    } else if (roomAlreadyExists && (roomsMap[rid].numParticipants !== r.numParticipants)) {
         roomsMap[rid] = r;
         $("#room-"+rid+" text.numParticipants").text(r.numParticipants);
-        if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
-            d3.selectAll(".marker").attr("class", "marker");
-            d3.selectAll("#room-"+rid).attr("class", "marker selected");
-            $("#message").focus();
-        }
-    } else if (!exists) {
+    } else if (!roomAlreadyExists) {
         console.log("Adding room node "+rid);
         rooms.push(r);
         roomsMap[rid] = r;
         window.overlay.draw();
+    }
+    // select the room */
+    if (data.change.client && data.change.client[0] === myClientId && data.change.type === "EnterRoom") {
+        d3.selectAll(".marker").attr("class", "marker");
+        d3.selectAll("#room-"+rid).attr("class", "marker selected");
+        $("#message").focus();
     }
 
   },
