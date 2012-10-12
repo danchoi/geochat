@@ -20,3 +20,11 @@
 message when a client appears and disappears (maybe place on map)
 
 
+
+Keep Snap server separate from WS code. WS connections are unstable when embedded in Snap
+
+Snap should handle Twitter OAuth, and save Auth info using auth snaplet
+
+
+
+
