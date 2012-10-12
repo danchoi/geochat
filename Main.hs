@@ -88,7 +88,7 @@ updateClientSinkBounds c sw ne s =
 broadcast :: [MessageFromServer] -> MVar ServerState -> IO ()
 broadcast ms state = do
   clientSinks <- readMVar state
-  forM_ (M.toList clientSinks) $ \c -> mapM (send state c) ms
+  forM_ (M.toList clientSinks) $ \c -> mapM (sendMessageIfClientInBounds state c) ms
   return ()
 
 singlecast :: [MessageFromServer] -> WS.Sink WS.Hybi10 -> IO ()
@@ -96,7 +96,9 @@ singlecast ms sink =
     WS.sendSink sink $ WS.textData $ encode ms
 
 sendEncoded :: WS.Sink WS.Hybi10 -> MessageFromServer -> IO ()
-sendEncoded sink message = WS.sendSink sink $ WS.textData $ encode message
+sendEncoded sink message = do 
+  putStrLn $ "Sending " ++ (show message)
+  WS.sendSink sink $ WS.textData $ encode message
 
 inBounds ((swlat,swlng), (nelat,nelng)) (lat, lng) =
   lat > swlat && lat < nelat && lng > swlng && lng < nelng
@@ -107,8 +109,8 @@ refuseSend cid m bounds =
 
 -- TODO change this to use faster lookup by key and calculate target clients with PostGIS
 
-send :: MVar ServerState -> ClientSink -> MessageFromServer -> IO ()
-send state (cid, (Just bounds, sink)) m = do
+sendMessageIfClientInBounds :: MVar ServerState -> ClientSink -> MessageFromServer -> IO ()
+sendMessageIfClientInBounds state (cid, (Just bounds, sink)) m = do
   r <- try (
     case m of 
       UpdatedRoom latLng _ _  ->
@@ -123,10 +125,10 @@ send state (cid, (Just bounds, sink)) m = do
               return s'
           putStrLn $ "Error sending sink for client " ++ (show cid) ++ ". Removing sink."
       Right _ ->
-          -- putStrLn "Successfully send sink"
+          -- putStrLn "Successfully sent sink"
           return ()
  
-send state (cid,(Nothing,_)) _ = putStrLn $ "No send; client " ++ (show cid) ++ " has no latLng"
+sendMessageIfClientInBounds state (cid,(Nothing,_)) _ = putStrLn $ "No sendMessage; client " ++ (show cid) ++ " has no latLng"
 
 application :: MVar ServerState -> WS.Request -> WS.WebSockets WS.Hybi10 ()
 application state rq = do
