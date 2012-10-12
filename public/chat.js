@@ -54,7 +54,7 @@ var ServerEvents = {
     var roomId = data.roomId;
     d3.select(".rooms #room-"+roomId+" circle").style("stroke", "white").transition().style("stroke", "black");
     d3.select(".rooms #room-"+roomId+" text.chat").text(data.client[1] + ": " + data.text);
-    var msg = {clientName: data.client[2], text: data.text};
+    var msg = {clientName: data.client[1], text: data.text};
     $("#chatStream").prepend(ich.message(msg));
   }
 
