@@ -71,10 +71,11 @@ main = do
 ------------------------------------------------------------------------
 
 site :: MVar ServerState -> Snap ()
-site state = ifTop (writeBS "hello") <|> 
+site state = ifTop (serveFile "../public/index.html") <|> 
     route [ ("login", loginWithTwitterHandler) ] <|>
     route [ ("ws", runWSSnap state) ] <|>
-    dir "static" (serveDirectory "public")
+    route [ ("", (serveDirectory "../public")) ] 
+
 
 runWSSnap :: MVar ServerState -> Snap ()
 runWSSnap state = do 
