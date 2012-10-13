@@ -233,27 +233,11 @@ loginWithTwitterHandler = do
     --   writeLBS $ "login with Twitter"
     tapp <- liftIO twitterApp
     liftIO $ putStrLn $ "Using config " ++ (show tapp)
-
     reqToken :: OA.Token <- OA.runOAuthM (OA.fromApplication tapp) $ do
-        liftIO $ putStrLn "Step 1: Getting request token"
         s1 <- OA.signRq2 OA.HMACSHA1 Nothing reqUrl 
-        liftIO $ putStrLn (show s1)
         OA.oauthRequest CurlClient s1
         token <- OA.getToken
         return token
-
-        {-
-        liftIO $ putStrLn "Step 2: Verifying access token"
-
-        -- cliAskAuthorization authUrl
-        -- change this to redirect to 
-        -- e.g. https://api.twitter.com/oauth/authenticate?oauth_token=NPcudxy0yU5T3tBzho7iCotZ3cnetKwcTIRlX0iwRl0
-
-        liftIO $ putStrLn "Getting Access Token"
-        accessToken <- (OA.signRq2 OA.HMACSHA1 Nothing accUrl >>= OA.oauthRequest CurlClient)
-        liftIO $ putStrLn $ show (OA.oauthParams accessToken)
-        return accessToken
-        -}
     liftIO $ putStrLn $ "Received reqToken: " ++ (show reqToken)
     -- next we save the token in session and redirect user to authorization page
     return ()
