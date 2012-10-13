@@ -2,7 +2,7 @@
 
 module TwitterOAuth 
   ( loginWithTwitterHandler
-  , twitterAccessTokenHandler)  where
+  , twitterAccessTokenHandler) where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (liftM)
@@ -54,6 +54,4 @@ twitterAccessTokenHandler = do
     -- TODO step 3 https://dev.twitter.com/docs/auth/implementing-sign-twitter
     --    accessToken <- (signRq2 HMACSHA1 Nothing accUrl >>= oauthRequest CurlClient)
     --    liftIO $ putStrLn $ show (oauthParams accessToken)
-
-
 
