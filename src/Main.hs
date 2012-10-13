@@ -18,7 +18,7 @@ import Snap.Http.Server
 import Snap.Util.FileServe
 
 import qualified Snap.Internal.Http.Types as Snap
-import Network.WebSockets.Snap
+import Network.WebSockets.Snap 
 
 import Data.List (foldl')
 
@@ -49,14 +49,6 @@ site :: Snap ()
 site = ifTop (serveFile "../public/index.html") <|> 
     route [ ("login", loginWithTwitterHandler) ] <|>
     route [ ("twitter_access", twitterAccessTokenHandler) ] <|>
-    route [ ("ws", runWSSnap) ] <|>
+    route [ ("ws", liftIO (newMVar M.empty) >>= runWebSocketsSnap . wsApplication) ] <|>
     route [ ("", (serveDirectory "../public")) ] 
-
-runWSSnap :: Snap ()
-runWSSnap = do 
-    state <- liftIO $ newMVar M.empty
-    runWebSocketsSnap $ wsApplication state
-
-
-
 
