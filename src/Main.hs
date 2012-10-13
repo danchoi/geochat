@@ -12,6 +12,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Lazy.IO as TL
+import qualified Data.ByteString.Char8 as B
 import qualified Network.WebSockets as WS
 import GeoChat.Types
 import GeoChat.JSONInstances
@@ -39,7 +40,7 @@ import Control.OldException
 -- Twitter and OAuth
 
 import qualified Network.OAuth.Consumer as OA
-import Network.OAuth.Http.Request
+import Network.OAuth.Http.Request as OA
 import Network.OAuth.Http.Response
 import Network.OAuth.Http.CurlHttpClient
 import qualified Network.OAuth.Http.PercentEncoding as OA
@@ -73,6 +74,7 @@ main = do
 site :: MVar ServerState -> Snap ()
 site state = ifTop (serveFile "../public/index.html") <|> 
     route [ ("login", loginWithTwitterHandler) ] <|>
+    route [ ("twitter_access", twitterAccessTokenHandler) ] <|>
     route [ ("ws", runWSSnap state) ] <|>
     route [ ("", (serveDirectory "../public")) ] 
 
@@ -240,8 +242,20 @@ loginWithTwitterHandler = do
         token <- OA.getToken
         return token
     liftIO $ putStrLn $ "Received reqToken: " ++ (show reqToken)
-    -- next we save the token in session and redirect user to authorization page
-    -- see authUrl above
-    return ()
+    liftIO $ putStrLn $ "Token oauth params: " ++ (show $ OA.oauthParams reqToken)
+    -- TODO save the oauth creds in session
+    let oauthToken = head $ OA.find ((==) "oauth_token") $ OA.oauthParams reqToken
+    let authUrl = "https://api.twitter.com/oauth/authenticate?oauth_token=" ++ oauthToken
+    redirect $ B.pack authUrl
+
+
+twitterAccessTokenHandler :: Snap ()
+twitterAccessTokenHandler = do
+    writeLBS "twitter access verified "
+    -- TODO step 3 https://dev.twitter.com/docs/auth/implementing-sign-twitter
+    --    accessToken <- (OA.signRq2 OA.HMACSHA1 Nothing accUrl >>= OA.oauthRequest CurlClient)
+    --    liftIO $ putStrLn $ show (OA.oauthParams accessToken)
+
+
 
 
