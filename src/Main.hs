@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, StandaloneDeriving, ScopedTypeVariables  #-}
 
 module Main where
 
@@ -6,7 +6,7 @@ import Data.Char (isPunctuation, isSpace)
 import Data.Monoid (mappend)
 import Data.Text (Text)
 import Control.Exception (fromException)
-import Control.Monad (forM_)
+import Control.Monad (forM_, liftM)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
@@ -26,15 +26,27 @@ import Control.Applicative
 import Snap.Http.Server.Config
 import Snap.Http.Server 
 import Snap.Util.FileServe
-import Network.WebSockets.Snap
-import qualified Snap.Core as Snap
+
 import qualified Snap.Internal.Http.Types as Snap
-import qualified Snap.Types.Headers as Headers
+import Network.WebSockets.Snap
+
 import Data.List (foldl')
 import qualified Data.Text.Encoding as TE
 import qualified Data.Map as M
 
 import Control.OldException
+
+-- Twitter and OAuth
+
+import qualified Network.OAuth.Consumer as OA
+import Network.OAuth.Http.Request
+import Network.OAuth.Http.Response
+import Network.OAuth.Http.CurlHttpClient
+import qualified Network.OAuth.Http.PercentEncoding as OA
+import Data.Maybe (fromJust)
+import Control.Monad.Error (runErrorT)
+
+
 
 simpleConfig :: Config m a
 simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
@@ -55,14 +67,22 @@ main = do
     httpServe simpleConfig $ site state  -- run with snap
     -- WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
 
+
+------------------------------------------------------------------------
+
 site :: MVar ServerState -> Snap ()
 site state = ifTop (writeBS "hello") <|> 
+    route [ ("login", loginWithTwitterHandler) ] <|>
     route [ ("ws", runWSSnap state) ] <|>
     dir "static" (serveDirectory "public")
 
 runWSSnap :: MVar ServerState -> Snap ()
 runWSSnap state = do 
   runWebSocketsSnap $ application state
+
+
+------------------------------------------------------------------------
+
 
 type Bounds = (LatLng,LatLng)
 type ClientSink = (ClientId, (Maybe Bounds, WS.Sink WS.Hybi10)) 
@@ -185,3 +205,55 @@ receiveMessage state conn client sink = flip WS.catchWsError catchDisconnect $ d
             return ()
 
 
+
+------------------------------------------------------------------------
+-- Twitter
+
+
+deriving instance Show OA.Application
+deriving instance Show OA.Token
+deriving instance Read OA.Application
+deriving instance Read OA.OAuthCallback
+
+reqUrl = fromJust . parseURL $ "https://api.twitter.com/oauth/request_token"
+accUrl = fromJust . parseURL $ "https://api.twitter.com/oauth/access_token"
+serviceUrl = fromJust . parseURL $ "http://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=danchoi"
+authUrl = ("https://api.twitter.com/oauth/authorize?oauth_token=" ++) . findWithDefault ("oauth_token","") . OA.oauthParams
+
+data Consumer = Consumer { key :: String , secret :: String } deriving (Show, Eq)
+
+
+twitterApp :: IO OA.Application 
+twitterApp = do
+    (key:secret:callback:_) <- liftM lines $ readFile "twitter.cfg" 
+    return $ OA.Application { OA.consKey = key, OA.consSec = secret, OA.callback = (OA.URL callback) }
+
+loginWithTwitterHandler :: Snap ()
+loginWithTwitterHandler = do
+    --   writeLBS $ "login with Twitter"
+    tapp <- liftIO twitterApp
+    liftIO $ putStrLn $ "Using config " ++ (show tapp)
+
+    reqToken :: OA.Token <- OA.runOAuthM (OA.fromApplication tapp) $ do
+        liftIO $ putStrLn "Step 1: Getting request token"
+        s1 <- OA.signRq2 OA.HMACSHA1 Nothing reqUrl 
+        liftIO $ putStrLn (show s1)
+        OA.oauthRequest CurlClient s1
+        token <- OA.getToken
+        return token
+
+        {-
+        liftIO $ putStrLn "Step 2: Verifying access token"
+
+        -- cliAskAuthorization authUrl
+        -- change this to redirect to 
+        -- e.g. https://api.twitter.com/oauth/authenticate?oauth_token=NPcudxy0yU5T3tBzho7iCotZ3cnetKwcTIRlX0iwRl0
+
+        liftIO $ putStrLn "Getting Access Token"
+        accessToken <- (OA.signRq2 OA.HMACSHA1 Nothing accUrl >>= OA.oauthRequest CurlClient)
+        liftIO $ putStrLn $ show (OA.oauthParams accessToken)
+        return accessToken
+        -}
+    liftIO $ putStrLn $ "Received reqToken: " ++ (show reqToken)
+    -- next we save the token in session and redirect user to authorization page
+    return ()
