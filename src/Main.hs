@@ -221,10 +221,6 @@ deriving instance Read OA.OAuthCallback
 reqUrl = fromJust . parseURL $ "https://api.twitter.com/oauth/request_token"
 accUrl = fromJust . parseURL $ "https://api.twitter.com/oauth/access_token"
 serviceUrl = fromJust . parseURL $ "http://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=danchoi"
-authUrl = ("https://api.twitter.com/oauth/authorize?oauth_token=" ++) . findWithDefault ("oauth_token","") . OA.oauthParams
-
-data Consumer = Consumer { key :: String , secret :: String } deriving (Show, Eq)
-
 
 twitterApp :: IO OA.Application 
 twitterApp = do
