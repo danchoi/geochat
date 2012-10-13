@@ -17,6 +17,6 @@ Library
     websockets-snap >= 0.7.0.0,
     aeson >= 0.3.2.6,
     snaplet-postgresql-simple == 0.2.1,
-    hoauth
+    hoauth == 0.3.5
 
 
