@@ -240,4 +240,7 @@ loginWithTwitterHandler = do
         return token
     liftIO $ putStrLn $ "Received reqToken: " ++ (show reqToken)
     -- next we save the token in session and redirect user to authorization page
+    -- see authUrl above
     return ()
+
+
