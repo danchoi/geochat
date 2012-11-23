@@ -10,6 +10,7 @@ import Database.PostgreSQL.Simple
 import Data.Time.Clock
 import Data.Maybe (fromJust)
 import qualified Data.ByteString.Char8 as C
+import Data.String
 
 connectInfo :: ConnectInfo
 connectInfo = defaultConnectInfo { connectDatabase = "geochat"

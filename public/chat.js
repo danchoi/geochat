@@ -75,6 +75,9 @@ function tellservermybounds() {
     // we restart the ws if the user repositions the map
     // otherwise, if we keep calling for "ListActiveRooms" the
     // ws sink on the server side will likely get clogged & be eventually removed
+    //
+    //
+    // TODO Change this to use HTML5 localStorage
     google.maps.event.addListenerOnce(map, 'dragend', restartWS);
     google.maps.event.addListenerOnce(map, 'zoom_changed', restartWS);
   } 
