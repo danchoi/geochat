@@ -3,7 +3,7 @@ echo $os
 if [[ "$os" == 'Darwin' ]]; then
   dir=/usr/local/Cellar/postgis/2.0.1/share/postgis
 else
-  dir=/usr/share/postgresql/9.1/contrib/postgis-2.0
+  dir=/usr/share/postgresql/9.1/contrib/postgis-1.5
 fi
 echo Using postgis dir: $os
 sleep 2
