@@ -46,9 +46,9 @@ main = do
 
 
 site :: Snap ()
-site = ifTop (serveFile "../public/index.html") <|> 
+site = ifTop (serveFile "public/index.html") <|> 
     route [ ("login", loginWithTwitterHandler) ] <|>
     route [ ("twitter_access", twitterAccessTokenHandler) ] <|>
     route [ ("ws", liftIO (newMVar M.empty) >>= runWebSocketsSnap . wsApplication) ] <|>
-    route [ ("", (serveDirectory "../public")) ] 
+    route [ ("", (serveDirectory "public")) ] 
 
