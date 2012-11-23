@@ -6,6 +6,10 @@ Description:
   Haskell.Geochat server 
 Author: Daniel Choi
 Maintainer: dhchoi@gmail.com
+Build-Type: Simple
+Category: Web
+License:             MIT
+License-file:        LICENSE
 Cabal-Version: >= 1.2
 Executable geochat
   Hs-Source-Dirs: src
