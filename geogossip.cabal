@@ -13,6 +13,9 @@ Library
   Exposed-Modules: 
     GeoChat.Types
   Build-Depends: 
+    base >= 4 && < 5, 
+    ghc-prim,
+    text >= 0.11.2.0,
     websockets > 0.6,
     websockets-snap >= 0.7.0.0,
     aeson >= 0.3.2.6,
