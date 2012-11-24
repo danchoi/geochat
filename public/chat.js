@@ -22,6 +22,7 @@ var ServerEvents = {
     // BEWARE the rooms and roomsMap are to be used with discrimination; I need a better way to query these collections
     var rid = r.roomId;
     var roomAlreadyExists = $("#room-"+rid).length > 0;
+    /* TODO This logic is convoluted */
     if (roomAlreadyExists && r.numParticipants === 0) {
         console.log("Remove room "+rid);
         for (var i = 0, j = rooms.length; i < j; i++) {
@@ -68,7 +69,6 @@ function tellservermybounds() {
                 lngSW:  bounds.getSouthWest().lng(),
                 latNE:  bounds.getNorthEast().lat(),
                 lngNE:  bounds.getNorthEast().lng() }
-    tellServer(myMapBounds);
     myMapBounds["type"] = "ListActiveRooms";
     tellServer(myMapBounds);
 
