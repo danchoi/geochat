@@ -25,7 +25,6 @@ import Data.List (foldl')
 import TwitterOAuth -- imports 2 Snap handlers
 import GeoChat.WebsocketServer (wsApplication)
 
-
 simpleConfig :: Config m a
 simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
     base = [hostName, accessLog, errorLog, locale, port, ip, verbose]
@@ -38,12 +37,10 @@ simpleConfig = foldl' (\accum new -> new accum) emptyConfig base where
     verbose = setVerbose True
     bsFromString = TE.encodeUtf8 . T.pack
 
-
 main :: IO ()
 main = do
     httpServe simpleConfig $ site -- run with snap
     -- WS.runServer "0.0.0.0" 9160 $ application state  -- run without snap
-
 
 site :: Snap ()
 site = ifTop (serveFile "public/index.html") <|> 
