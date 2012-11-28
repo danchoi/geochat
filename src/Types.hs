@@ -2,43 +2,26 @@
 
 module Types where
 
-import Data.Text (Text)
 import GHC.Generics (Generic)
 
-type Coordinates = (Double, Double)
+type Lat = Double
+type Lng = Double
+type Coordinates = (Lat, Lng)
 type Bounds = (Coordinates, Coordinates)  -- SW NE
 type RoomId = Int
-type ClientId = Int
+type UserId = Int
 
 data Room = Room { roomId :: Int 
                  , coordinates :: Coordinates 
                  , numParticipants :: Int
-                 , clients :: [Client]
+                 , users :: [User]
                  } deriving (Generic, Show)
 
-type Nickname = Text
+type Nickname = String
 
-data Client = Client { clientId :: Int 
-                     , nickName :: Text  -- anon by default
-                     , clientRoomId :: Maybe Int
-                     } deriving (Generic, Show)
+data User = User { userId  :: Int 
+                 , nickName :: String  -- anon by default
+                 , userRoomId :: Maybe Int
+                 } deriving (Generic, Show)
 
-data MessageFromClient = ListActiveRooms Bounds
-                       | MapBoundsUpdated Bounds
-                       | CreateRoom Coordinates
-                       | ChangeNickname Nickname 
-                       | JoinRoom RoomId
-                       | PostMessage Text 
-                       | Leave deriving (Show)
-
-data RoomChange = InitRoom
-                | ChangedNickname Client
-                | EnterRoom Client
-                | ExitRoom Client deriving (Show)
-
-data MessageFromServer = Handshake ClientId
-                       | UpdatedRoom Coordinates Room RoomChange
-                       | Broadcast Coordinates Client RoomId Text
-                       | ErrorMessage { errMessage :: String } 
-                       deriving (Show)
 

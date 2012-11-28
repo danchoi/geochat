@@ -7,29 +7,29 @@ create table rooms (
   lng float
 );
 
-create table clients (
-  client_id serial primary key,
-  nickname varchar default 'anon',
+create table users (
+  user_id serial primary key,
+  name varchar default 'anon',
   room_id integer null references rooms(room_id) on delete cascade, 
   created timestamp with time zone default now(),
   exited timestamp with time zone 
 );
 
-create index clients_room_id_idx on clients (room_id);
+create index users_room_id_idx on users (room_id);
 
 create table messages (
   message_id serial primary key,
-  client_id integer references clients (client_id) on delete cascade,
-  client_nick varchar,
+  user_id integer references users (user_id) on delete cascade,
+  user_nick varchar,
   content text,
   room_id integer references rooms (room_id) on delete cascade,
   created timestamp with time zone default now()
 );
-create index messages_room_id_client_id_idx on messages (room_id, client_id);
+create index messages_room_id_user_id_idx on messages (room_id, user_id);
 
 select AddGeometryColumn('rooms', 'coordinates', 2163, 'POINT', 2);
-select AddGeometryColumn('clients', 'coordinates', 2163, 'POINT', 2);
-select AddGeometryColumn('clients', 'bounds', 2163, 'POLYGON', 2);
+select AddGeometryColumn('users', 'coordinates', 2163, 'POINT', 2);
+select AddGeometryColumn('users', 'bounds', 2163, 'POLYGON', 2);
 
 CREATE OR REPLACE FUNCTION update_room_geom() RETURNS trigger AS $$
 BEGIN
@@ -38,10 +38,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS update_room_geom_trigger ON rooms;
 CREATE TRIGGER update_room_geom_trigger BEFORE INSERT ON rooms FOR EACH ROW EXECUTE PROCEDURE update_room_geom();
 
 CREATE INDEX rooms_coordinates_idx  ON rooms  USING GIST (coordinates);
-CREATE INDEX clients_coordinates_idx  ON clients  USING GIST (coordinates);
-CREATE INDEX clients_bounds_idx  ON clients  USING GIST (bounds);
+CREATE INDEX users_coordinates_idx  ON users  USING GIST (coordinates);
+CREATE INDEX users_bounds_idx  ON users  USING GIST (bounds);
 
