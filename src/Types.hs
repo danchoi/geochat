@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
 
 module Types where
-
 import GHC.Generics (Generic)
 
 type Lat = Double
@@ -16,8 +15,6 @@ data Room = Room { roomId :: Int
                  , numParticipants :: Int
                  , users :: [User]
                  } deriving (Generic, Show)
-
-type Nickname = String
 
 data User = User { userId  :: Int 
                  , nickName :: String  -- anon by default
