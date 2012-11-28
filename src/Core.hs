@@ -38,6 +38,9 @@ setUserCoordinates userId (lat, lng) = do
     commit dbh
     return ()
 
+setUserBounds :: Int -> Bounds -> IO ()
+setUserBounds = undefined
+
 getUser :: Int -> IO User
 getUser uid = do
     dbh <- conn

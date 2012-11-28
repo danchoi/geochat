@@ -187,3 +187,14 @@ NEXT
 implement user bounds
 
 
+
+TODO
+
+change
+  setUserCoordinates :: Int -> Coordinates -> IO ()
+  to
+  setUserCoordinates :: Int -> Coordinates -> IO User
+?
+
+
+
