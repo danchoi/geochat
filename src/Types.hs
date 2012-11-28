@@ -12,7 +12,7 @@ type RoomId = Int
 type UserId = Int
 
 data Room = Room { roomId :: Int 
-                 , coordinates :: Coordinates 
+                 , roomCoordinates :: Coordinates 
                  , numParticipants :: Int
                  , users :: [User]
                  } deriving (Generic, Show)
@@ -21,6 +21,7 @@ type Nickname = String
 
 data User = User { userId  :: Int 
                  , nickName :: String  -- anon by default
+                 , userCoordinates :: Maybe Coordinates
                  , userRoomId :: Maybe Int
                  } deriving (Generic, Show)
 
