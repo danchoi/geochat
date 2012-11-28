@@ -37,7 +37,6 @@ setUserCoordinates userId (lat, lng) = do
         [toSql userId]
     commit dbh
     return ()
- 
 
 getUser :: Int -> IO User
 getUser uid = do
