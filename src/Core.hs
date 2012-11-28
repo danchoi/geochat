@@ -32,7 +32,8 @@ setUserCoordinates userId (lat, lng) = do
     dbh <- conn
     run dbh 
         ("update users set coordinates = \
-        \ ST_Transform(ST_GeomFromText('POINT(" ++ show lng ++ " " ++ show lat ++ ")', 4326), 2163) where user_id = ?")
+        \ST_Transform(ST_GeomFromText('POINT(" ++ show lng ++ " " ++ show lat ++ ")', 4326), 2163) \
+        \where user_id = ?")
         [toSql userId]
     commit dbh
     return ()
