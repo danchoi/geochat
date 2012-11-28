@@ -126,4 +126,54 @@ SELECT ST_Transform(
     || ? || ' ' || ? || ','
     || ? || ' ' || ? || ')', 4269)), 2163);
 
+------------------------------------------------------------------------
+Tue Nov 27 21:39:26 EST 2012
+
+
+redesign
+
+start with primitives
+
+rename room to chat
+
+client (user)
+  bounds : the viewport -- new attribute of client
+  room_id : a client joins a room
+
+room
+  Coordinates (rename from latlng)
+
+
+updateClient {} record
+createRoom coordinates
+
+nearbyRooms Coordinate  -- sorted by distance
+nearbyRooms Room  -- sorted by distance
+clientsInBounds
+roomsInBounds
+
+events
+  clientCreated
+  clientBoundsChanged
+  roomCreated
+  someoneJoinedRoom
+  someoneLeftRoom
+  messagePosted
+
+sequencing
+  this is done by matching on the incoming message
+  e.g. ClientJoined
+  Don't over multiply layers 
+  f returns an event datatype
+  pattern match on this to trigger next event
+  should be able to broadcast things arbitrarily
+
+  when client moves viewport
+    to this client: add rooms that were in bounds
+    bump from room if room falls out of bounds
+
+Question: how to send data to clients
+
+
+
 

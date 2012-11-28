@@ -36,6 +36,7 @@ refreshClient conn client = do
                    otherwise -> Nothing
     return (client {nickName = nickname, clientRoomId = mrid})
 
+--- this is too much implementation detail
 findRoom :: Connection -> RoomId -> IO Room
 findRoom conn rid = do
     let q = "select rooms.lat, rooms.lng from rooms where room_id = ?"

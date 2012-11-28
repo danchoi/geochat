@@ -47,7 +47,6 @@ loginWithTwitterHandler = do
     let authUrl = "https://api.twitter.com/oauth/authenticate?oauth_token=" ++ oauthToken
     redirect $ B.pack authUrl
 
-
 twitterAccessTokenHandler :: Snap ()
 twitterAccessTokenHandler = do
     writeLBS "twitter access verified "
