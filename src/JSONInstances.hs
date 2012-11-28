@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
 
-module GeoChat.JSONInstances where
-import GeoChat.Types
+module JSONInstances where
+import Types
+
 import GHC.Generics (Generic)
 import Data.Aeson 
 import Data.Text (Text)

@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
-module GeoChat.EventProcessor where
+module EventProcessor where
 
+import Types
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Control.Monad (forM_, liftM, forM)
-import GeoChat.Types
 import Database.PostgreSQL.Simple
 import Data.Time.Clock
 import Data.Maybe (fromJust)

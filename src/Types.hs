@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
 
-module GeoChat.Types where
+module Types where
 
 import Data.Text (Text)
 import qualified Network.WebSockets as WS
