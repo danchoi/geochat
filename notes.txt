@@ -180,3 +180,10 @@ PostgreSQL functions and Haskell functions should be developed in tandem
 (prior to designing the web server or web client layer)
 
 
+
+
+NEXT
+
+implement user bounds
+
+

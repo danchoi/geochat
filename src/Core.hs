@@ -56,6 +56,7 @@ convUserRow [a,b,lat,lng,c] =
     User { userId = fromSql a
          , nickName = fromSql b
          , userCoordinates = (getCoordinates (fromSql lat) (fromSql lng))
+         , userBounds = Nothing
          , userRoomId = fromSql c
          }
   where getCoordinates :: Maybe Double -> Maybe Double -> Maybe Coordinates

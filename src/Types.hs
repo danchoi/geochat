@@ -19,6 +19,7 @@ data Room = Room { roomId :: Int
 data User = User { userId  :: Int 
                  , nickName :: String  -- anon by default
                  , userCoordinates :: Maybe Coordinates
+                 , userBounds :: Maybe Bounds
                  , userRoomId :: Maybe Int
                  } deriving (Generic, Show)
 
