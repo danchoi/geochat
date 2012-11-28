@@ -3,25 +3,21 @@
 module Types where
 
 import Data.Text (Text)
-import qualified Network.WebSockets as WS
 import GHC.Generics (Generic)
 import Data.Aeson 
-
-instance Show (WS.Sink a) where
-    show _ = "[WS.Sink value]"
 
 instance ToJSON (WS.Sink a) where
     toJSON _ = toJSON ()   
 
-type LatLng = (Double, Double)
-type Client' = (ClientId, Nickname)  
+type Coordinates = (Double, Double)
+type Bounds = (Coordinates, Coordinates)  -- SW NE
 type RoomId = Int
 type ClientId = Int
 
 data Room = Room { roomId :: Int 
-                 , latLng :: LatLng 
+                 , coordinates :: Coordinates 
                  , numParticipants :: Int
-                 , clients :: [Client']
+                 , clients :: [Client]
                  } deriving (Generic, Show)
 
 instance ToJSON Room
@@ -35,23 +31,23 @@ data Client = Client { clientId :: Int
 
 instance ToJSON Client
 
-data MessageFromClient = ListActiveRooms LatLng LatLng
-                       | MapBoundsUpdated LatLng LatLng
-                       | CreateRoom LatLng
+data MessageFromClient = ListActiveRooms Bounds
+                       | MapBoundsUpdated Bounds
+                       | CreateRoom Coordinates
                        | ChangeNickname Nickname 
                        | JoinRoom RoomId
                        | PostMessage Text 
                        | Leave deriving (Show)
 
 data RoomChange = InitRoom
-                | ChangedNickname Client' 
-                | EnterRoom Client' 
-                | ExitRoom Client' deriving (Show)
+                | ChangedNickname Client
+                | EnterRoom Client
+                | ExitRoom Client deriving (Show)
 
 
 data MessageFromServer = Handshake ClientId
-                       | UpdatedRoom LatLng Room RoomChange
-                       | Broadcast LatLng Client' RoomId Text
+                       | UpdatedRoom Coordinates Room RoomChange
+                       | Broadcast Coordinates Client RoomId Text
                        | ErrorMessage { errMessage :: String } 
                        deriving (Show)
 
