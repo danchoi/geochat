@@ -39,8 +39,6 @@ allUsersInBounds ((swlat, swlng), (nelat, nelng)) = do
     return $ map convUserRow r
   where variables = map toSql [swlng, swlat, nelng, swlat, nelng, nelat, swlng, nelat, swlng, swlat] 
 
-
-
 setUserCoordinates :: Int -> Coordinates -> IO ()
 setUserCoordinates userId (lat, lng) = do
     dbh <- conn
