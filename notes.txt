@@ -210,6 +210,7 @@ User {userId = 3, nickName = "dan", userRoomId = Nothing}
 User {userId = 2, nickName = "dan", userCoordinates = Just (42.3,-72.0), userRoomId = Nothing}
 *Core> setUserBounds 2 ((42.3,-71.0),(42.5,-70.5))
 *Core> allUsersInBounds  ((42.3,-72.0),(42.5,-71.5))
-[User {userId = 2, nickName = "dan", userCoordinates = Just (42.3,-72.0), userBounds = Nothing, userRoomId = Nothing}]
-
+[User {userId = 2, nickName = "dan", userCoordinates = Just (42.3,-72.0), userBounds = Just ((42.3,-71.5),(42.5,-71.0)), userRoomId = Nothing}]
+*Core> allUsers
+[User {userId = 3, nickName = "dan", userCoordinates = Nothing, userBounds = Nothing, userRoomId = Nothing},User {userId = 2, nickName = "dan", userCoordinates = Just (42.3,-72.0), userBounds = Just ((42.3,-71.5),(42.5,-71.0)), userRoomId = Nothing}]
 
