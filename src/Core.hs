@@ -39,7 +39,17 @@ setUserCoordinates userId (lat, lng) = do
     return ()
 
 setUserBounds :: Int -> Bounds -> IO ()
-setUserBounds = undefined
+setUserBounds userId ((swlat, swlng), (nelat, nelng)) = do
+    dbh <- conn
+    run dbh 
+        ("update users set bounds = \
+        \ST_Transform(ST_MakePolygon(ST_GeomFromText('LINESTRING(' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ')', 4269)), 2163) \
+        \where user_id = ?")
+        (variables ++ [toSql userId])
+
+    commit dbh
+    return ()
+  where variables = map toSql [swlng, swlat, nelng, swlat, nelng, nelat, swlng, nelat, swlng, swlat] 
 
 getUser :: Int -> IO User
 getUser uid = do
@@ -59,7 +69,7 @@ convUserRow [a,b,lat,lng,c] =
     User { userId = fromSql a
          , nickName = fromSql b
          , userCoordinates = (getCoordinates (fromSql lat) (fromSql lng))
-         , userBounds = Nothing
+         , userBounds = Nothing  -- Don't really need to return this to client
          , userRoomId = fromSql c
          }
   where getCoordinates :: Maybe Double -> Maybe Double -> Maybe Coordinates
