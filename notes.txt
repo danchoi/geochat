@@ -193,11 +193,18 @@ change
 
 
 Idea. instead of chat rooms, just use the map to show chat bubbles on
-the map.
+the map. This is a simpler interface, and perhaps more intuitive and
+transparent. Remove complication of rooms, just use users with
+coordinates of interest and distance.
+
+The question is then how to filter and present all the chats posted to a
+particular user.
 
 
 
 
+*Core> createUser "dan"
+User {userId = 3, nickName = "dan", userRoomId = Nothing}
 *Core> setUserCoordinates 2 (42.3, -72.0)
 *Core> getUser 2
 User {userId = 2, nickName = "dan", userCoordinates = Just (42.3,-72.0), userRoomId = Nothing}

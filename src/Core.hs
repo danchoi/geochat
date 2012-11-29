@@ -71,20 +71,27 @@ getUser uid = do
                      [toSql uid]
     return $ convUserRow r
             
-userFields = "user_id, name, \
+userFields = "user_id, name, room_id, \
     \st_y(st_transform(coordinates, 4326)), \
-    \st_x(st_transform(coordinates, 4326)), room_id"
+    \st_x(st_transform(coordinates, 4326)), \
+    \st_ymin(st_transform(bounds, 4326)), \
+    \st_xmin(st_transform(bounds, 4326)), \
+    \st_ymax(st_transform(bounds, 4326)), \
+    \st_xmax(st_transform(bounds, 4326))"
          
 convUserRow :: [SqlValue] -> User
-convUserRow [a,b,lat,lng,c] = 
+convUserRow [a, b, c, lat, lng, swlat, swlng, nelat, nelng] = 
     User { userId = fromSql a
          , nickName = fromSql b
-         , userCoordinates = (getCoordinates (fromSql lat) (fromSql lng))
-         , userBounds = Nothing  -- Don't really need to return this to client
          , userRoomId = fromSql c
+         , userCoordinates = (getCoordinates (fromSql lat) (fromSql lng))
+         , userBounds = getBounds (fromSql swlat) (fromSql swlng) (fromSql nelat) (fromSql nelng) 
          }
   where getCoordinates :: Maybe Double -> Maybe Double -> Maybe Coordinates
         getCoordinates (Just lat') (Just lng') = Just (lat', lng') 
         getCoordinates _ _ = Nothing
+        getBounds :: Maybe Double -> Maybe Double -> Maybe Double -> Maybe Double -> Maybe Bounds
+        getBounds (Just swlat) (Just swlng) (Just nelat) (Just nelng) = Just ((swlat, swlng), (nelat, nelng))
+        getBounds _ _ _ _ = Nothing
 
 
