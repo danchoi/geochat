@@ -62,7 +62,6 @@ setUserBounds userId ((swlat, swlng), (nelat, nelng)) = do
     return ()
   where variables = map toSql [swlng, swlat, nelng, swlat, nelng, nelat, swlng, nelat, swlng, swlat] 
 
-
 getUser :: Int -> IO User
 getUser uid = do
     dbh <- conn

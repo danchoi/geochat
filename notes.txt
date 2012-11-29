@@ -184,17 +184,16 @@ PostgreSQL functions and Haskell functions should be developed in tandem
 
 NEXT
 
-implement user bounds
-
 
 
 TODO
 
 change
-  setUserCoordinates :: Int -> Coordinates -> IO ()
-  to
-  setUserCoordinates :: Int -> Coordinates -> IO User
-?
+
+
+
+Idea. instead of chat rooms, just use the map to show chat bubbles on
+the map.
 
 
 
