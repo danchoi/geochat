@@ -27,6 +27,20 @@ allUsers = do
     r <- quickQuery' dbh ("select " ++ userFields ++ " from users") []
     return $ map convUserRow r
 
+allUsersInBounds :: Bounds -> IO [User]
+allUsersInBounds ((swlat, swlng), (nelat, nelng)) = do
+    dbh <- conn
+    r <- quickQuery' dbh 
+          ("select " ++ userFields ++ " from users \
+          \where ST_Intersects(  \
+          \   ST_Transform(ST_MakePolygon(ST_GeomFromText('LINESTRING(' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ')', 4269)), 2163), \
+          \   users.coordinates)")
+          variables
+    return $ map convUserRow r
+  where variables = map toSql [swlng, swlat, nelng, swlat, nelng, nelat, swlng, nelat, swlng, swlat] 
+
+
+
 setUserCoordinates :: Int -> Coordinates -> IO ()
 setUserCoordinates userId (lat, lng) = do
     dbh <- conn
@@ -46,10 +60,10 @@ setUserBounds userId ((swlat, swlng), (nelat, nelng)) = do
         \ST_Transform(ST_MakePolygon(ST_GeomFromText('LINESTRING(' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ',' || ? || ' ' || ? || ')', 4269)), 2163) \
         \where user_id = ?")
         (variables ++ [toSql userId])
-
     commit dbh
     return ()
   where variables = map toSql [swlng, swlat, nelng, swlat, nelng, nelat, swlng, nelat, swlng, swlat] 
+
 
 getUser :: Int -> IO User
 getUser uid = do
